@@ -16,7 +16,6 @@ export const ForwardOneLogo: React.FC<ForwardOneLogoProps> = ({
   className = ''
 }) => {
   const [clickCount, setClickCount] = useState(0);
-  const [showTooltip, setShowTooltip] = useState(false);
 
   const handleDoubleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -43,15 +42,11 @@ export const ForwardOneLogo: React.FC<ForwardOneLogoProps> = ({
 
   const textColor = variant === 'dark' ? 'text-[#102A6B]' : 'text-white';
   const taglineColor = variant === 'dark' ? 'text-[#102A6B]' : 'text-[#00C2C2]';
-  const topBarColor = variant === 'dark' ? '#2E3192' : '#5362DC';
 
   return (
     <div
       onClick={handleSingleClick}
       onDoubleClick={handleDoubleClick}
-      onMouseEnter={() => setShowTooltip(true)}
-      onMouseLeave={() => setShowTooltip(false)}
-      title="Double-cliquez pour ouvrir le Back-Office Administrateur"
       className={`relative inline-flex items-center gap-2.5 sm:gap-3 cursor-pointer select-none group ${className}`}
     >
       {/* Brand Vector Icon matching official Forward One mark */}
@@ -85,13 +80,6 @@ export const ForwardOneLogo: React.FC<ForwardOneLogoProps> = ({
           </div>
         )}
       </div>
-
-      {/* Admin Quick Secret Tooltip Badge */}
-      {showTooltip && (
-        <div className="absolute -bottom-8 left-0 z-50 px-2 py-0.5 bg-[#141446] border border-[#6C68F4]/40 text-[#00C2C2] text-[10px] font-medium rounded shadow-lg whitespace-nowrap animate-fade-in pointer-events-none">
-          🔒 Double-clic : Accès Back-Office
-        </div>
-      )}
     </div>
   );
 };

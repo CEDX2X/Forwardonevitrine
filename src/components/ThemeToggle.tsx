@@ -12,6 +12,8 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
   onToggleTheme,
   className = ''
 }) => {
+  const isLight = theme === 'light';
+
   return (
     <div className={`flex flex-col items-center select-none ${className}`}>
       {/* Horizontal Pill Toggle Switch */}
@@ -19,38 +21,40 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
         onClick={onToggleTheme}
         type="button"
         aria-label="Basculer Mode Jour / Nuit"
-        className={`relative flex items-center justify-between w-14 h-7 rounded-full p-1 cursor-pointer transition-all duration-200 shadow-inner focus:outline-none border ${
-          theme === 'light'
-            ? 'bg-amber-50 border-amber-200'
-            : 'bg-slate-800 border-slate-700'
+        className={`relative flex items-center justify-between w-16 h-8 rounded-full p-1 cursor-pointer transition-all duration-200 focus:outline-none border shadow-inner ${
+          isLight
+            ? 'bg-slate-100 border-slate-300/80'
+            : 'bg-[#0d0d2e] border-white/20'
         }`}
-        title={theme === 'light' ? 'Passer en Mode Nuit (Sombre)' : 'Passer en Mode Jour (Clair)'}
+        title={isLight ? 'Passer en Mode Nuit' : 'Passer en Mode Jour'}
       >
-        {/* Sun Icon */}
-        <Sun className={`w-3.5 h-3.5 z-10 transition-colors ${theme === 'light' ? 'text-amber-500' : 'text-slate-500'}`} />
+        {/* Sun Icon (Left) */}
+        <Sun className={`w-4 h-4 z-10 transition-colors ml-0.5 ${isLight ? 'text-amber-500' : 'text-slate-500'}`} />
         
-        {/* Moon Icon */}
-        <Moon className={`w-3.5 h-3.5 z-10 transition-colors ${theme === 'dark' ? 'text-indigo-400' : 'text-slate-400'}`} />
+        {/* Moon Icon (Right) */}
+        <Moon className={`w-4 h-4 z-10 transition-colors mr-0.5 ${!isLight ? 'text-indigo-300' : 'text-slate-400'}`} />
 
-        {/* Sliding Knob */}
+        {/* Sliding White Circle Knob */}
         <div
-          className={`absolute top-0.5 bottom-0.5 w-6 h-6 rounded-full shadow-md transform transition-transform duration-200 flex items-center justify-center ${
-            theme === 'light'
-              ? 'translate-x-0 bg-white border border-amber-300'
-              : 'translate-x-7 bg-slate-900 border border-indigo-500'
+          className={`absolute top-1 bottom-1 w-6 h-6 rounded-full shadow-md transform transition-transform duration-200 flex items-center justify-center ${
+            isLight
+              ? 'translate-x-0 bg-white border border-amber-200'
+              : 'translate-x-8 bg-slate-900 border border-slate-700'
           }`}
         >
-          <span className="text-[10px] leading-none">
-            {theme === 'light' ? '☀️' : '🌙'}
-          </span>
+          {isLight ? (
+            <Sun className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
+          ) : (
+            <Moon className="w-3.5 h-3.5 text-indigo-300 fill-indigo-300" />
+          )}
         </div>
       </button>
 
-      {/* French Label as required by user prompt: "Mode Auto/Manuel" */}
-      <div className={`mt-0.5 px-1.5 py-0.2 rounded border text-[9px] font-semibold shadow-2xs whitespace-nowrap ${
-        theme === 'light'
+      {/* Label: "Mode Auto/Manuel" */}
+      <div className={`mt-0.5 px-2 py-0.5 rounded-md border text-[9px] font-semibold shadow-2xs whitespace-nowrap ${
+        isLight
           ? 'bg-slate-100 border-slate-300 text-slate-800'
-          : 'bg-slate-800 border-slate-700 text-slate-200'
+          : 'bg-[#141446]/90 border-white/20 text-slate-300'
       }`}>
         Mode Auto/Manuel
       </div>

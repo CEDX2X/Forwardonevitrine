@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ForwardOneLogo } from './ForwardOneLogo';
 import { ThemeToggle } from './ThemeToggle';
-import { FileText, CalendarCheck, Lock, Menu, X, ChevronRight } from 'lucide-react';
+import { FileText, CalendarCheck, Menu, X, ChevronRight } from 'lucide-react';
 
 interface NavbarProps {
   activeTab: string;
@@ -108,17 +108,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Theme Toggle Switch (Jour / Nuit) */}
           <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} />
-
-          {/* Admin Lock Shortcut */}
-          <button
-            onClick={onOpenAdminLogin}
-            title="Espace Administrateur (Back-Office)"
-            className={`p-2 rounded-full transition-colors cursor-pointer ${
-              isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : 'text-[#738591] hover:text-[#FFAD5B] hover:bg-white/5'
-            }`}
-          >
-            <Lock className="w-4 h-4" />
-          </button>
         </div>
 
         {/* Mobile controls (Devis + Theme Toggle + Hamburger Menu) */}

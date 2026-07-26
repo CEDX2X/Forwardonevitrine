@@ -1,0 +1,8 @@
+{
+  "name": "Forward One",
+  "description": "Plateforme web moderne pour Forward One - Marketing Digital & Logistique Événementielle. Slogan: Progress Without Limits.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

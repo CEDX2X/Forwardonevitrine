@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Top Blue Parallelogram -->
+  <path d="M 18 10 L 76 10 L 88 33 L 30 33 Z" fill="#3B529A" />
+  <!-- Bottom Green Logo Mark -->
+  <path d="M 36 41 L 64 41 L 77 63 L 52 63 L 42 86 L 28 63 Z" fill="#12B857" />
+</svg>

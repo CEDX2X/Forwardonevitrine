@@ -1,0 +1,175 @@
+import React from 'react';
+import { SiteContent } from '../types';
+import { ForwardOneLogo } from './ForwardOneLogo';
+import { Award, Compass, Sparkles, MapPin, Mail, Phone, ArrowUpRight } from 'lucide-react';
+
+interface AboutSectionProps {
+  siteContent: SiteContent;
+  onOpenDevis: () => void;
+  onOpenAdminLogin: () => void;
+}
+
+export const AboutSection: React.FC<AboutSectionProps> = ({
+  siteContent,
+  onOpenDevis,
+  onOpenAdminLogin
+}) => {
+  return (
+    <section id="about" className="py-20 bg-[#0d0d2e] text-white relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20">
+        
+        {/* Top Headline */}
+        <div className="text-center max-w-3xl mx-auto space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#6C68F4]/20 text-[#00C2C2] text-xs font-semibold uppercase tracking-wider">
+            <span>À Propos de Forward One</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+            {siteContent.aboutHeadline}
+          </h2>
+          <p className="text-slate-300 text-base leading-relaxed">
+            {siteContent.aboutStory}
+          </p>
+        </div>
+
+        {/* Highlight Feature: "Pourquoi la flèche dans le logo ?" */}
+        <div className="rounded-3xl bg-gradient-brand-2 border border-[#6C68F4]/30 p-8 sm:p-12 shadow-2xl relative overflow-hidden">
+          
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            
+            {/* Left Column: Visual Brand Icon & Logo Breakdown */}
+            <div className="lg:col-span-5 space-y-6 text-center lg:text-left">
+              <div className="inline-block p-6 rounded-2xl bg-[#141446] border border-white/10 shadow-xl">
+                <ForwardOneLogo variant="light" size="lg" onAdminTrigger={onOpenAdminLogin} />
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-2xl font-bold text-white">Pourquoi la flèche dans le logo ?</h3>
+                <p className="text-xs text-[#00C2C2] font-semibold uppercase tracking-wider">
+                  La signature visuelle de l'identité Forward One
+                </p>
+              </div>
+
+              <p className="text-xs text-slate-300 leading-relaxed">
+                La flèche n'est pas un simple élément décoratif. Elle raconte l'histoire d'une marque qui ne s'arrête jamais, qui pousse ses clients vers de nouveaux horizons digitaux et événementiels.
+              </p>
+            </div>
+
+            {/* Right Column: The 4 Pillars from the Brand Guide */}
+            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6">
+              
+              {/* Pillar 1 */}
+              <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                <div className="w-9 h-9 rounded-xl bg-[#6C68F4]/20 text-[#6C68F4] flex items-center justify-center font-bold">
+                  01
+                </div>
+                <h4 className="font-bold text-white text-base">Mouvement & Progression</h4>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  L'élan vers l'avant, le dépassement de soi. Une marque en marche constante où tout est en évolution.
+                </p>
+              </div>
+
+              {/* Pillar 2 */}
+              <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                <div className="w-9 h-9 rounded-xl bg-[#00C2C2]/20 text-[#00C2C2] flex items-center justify-center font-bold">
+                  02
+                </div>
+                <h4 className="font-bold text-white text-base">Direction & Leadership</h4>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Une flèche montre le chemin. Elle positionne Forward One comme un guide qui maîtrise son cap et emmène ses clients vers la réussite.
+                </p>
+              </div>
+
+              {/* Pillar 3 */}
+              <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                <div className="w-9 h-9 rounded-xl bg-[#FFAD5B]/20 text-[#FFAD5B] flex items-center justify-center font-bold">
+                  03
+                </div>
+                <h4 className="font-bold text-white text-base">Excellence & Numéro 1</h4>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Symbole de performance et de position dominante. Forward One, c'est le numéro 1 qui ouvre la voie sans concession.
+                </p>
+              </div>
+
+              {/* Pillar 4 */}
+              <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                <div className="w-9 h-9 rounded-xl bg-[#6C68F4]/20 text-[#00C2C2] flex items-center justify-center font-bold">
+                  04
+                </div>
+                <h4 className="font-bold text-white text-base">Simplicité & Mémorisation</h4>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Un symbole universel immédiatement reconnaissable qui gravera la marque de manière indélébile dans les esprits.
+                </p>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* Brand Values Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="p-6 rounded-2xl bg-[#141446] border border-white/10 space-y-3">
+            <Compass className="w-8 h-8 text-[#6C68F4]" />
+            <h3 className="font-bold text-lg text-white">Innovation sans Limite</h3>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Nous adoptons les technologies les plus évoluées en développement Next.js, régie vidéo 4K et éclairage asservi.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-[#141446] border border-white/10 space-y-3">
+            <Award className="w-8 h-8 text-[#00C2C2]" />
+            <h3 className="font-bold text-lg text-white">Rigueur & Zéro Défaut</h3>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Chaque détail compte. En logistique événementielle comme en marketing digital, la précision est la clé du succès.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-[#141446] border border-white/10 space-y-3">
+            <Sparkles className="w-8 h-8 text-[#FFAD5B]" />
+            <h3 className="font-bold text-lg text-white">Engagement Partenaire</h3>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Nous faisons équipe avec vous à chaque étape, de la réflexion stratégique jusqu'au démontage final du matériel.
+            </p>
+          </div>
+        </div>
+
+        {/* Contact Banner & Location */}
+        <div className="rounded-3xl bg-[#141446] border border-white/10 p-8 sm:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="lg:col-span-8 space-y-4">
+            <h3 className="text-2xl font-bold text-white">Parlons de votre prochain projet</h3>
+            <p className="text-sm text-slate-300 max-w-xl">
+              Que vous souhaitiez propulser votre stratégie marketing ou louer du matériel de sonorisation et d'éclairage pro, nos experts sont à votre disposition.
+            </p>
+
+            <div className="flex flex-wrap gap-6 pt-2 text-xs text-slate-300">
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-[#00C2C2]" />
+                <span>{siteContent.contactEmail}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-[#FFAD5B]" />
+                <span>{siteContent.contactPhone}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-[#6C68F4]" />
+                <span>{siteContent.contactAddress}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-4 flex justify-start lg:justify-end">
+            <button
+              onClick={onOpenDevis}
+              className="px-6 py-3.5 rounded-xl font-bold text-xs text-white bg-[#6C68F4] hover:bg-[#5b57e0] flex items-center gap-2 shadow-lg cursor-pointer"
+            >
+              <span>Demander un Devis Gratuit</span>
+              <ArrowUpRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  );
+};

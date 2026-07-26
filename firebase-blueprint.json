@@ -1,0 +1,151 @@
+{
+  "entities": {
+    "siteContent": {
+      "title": "Site Content",
+      "description": "Global text content and contact information for Forward One",
+      "type": "object",
+      "properties": {
+        "heroTitle": { "type": "string" },
+        "heroSubtitle": { "type": "string" },
+        "heroSlogan": { "type": "string" },
+        "aboutHeadline": { "type": "string" },
+        "aboutStory": { "type": "string" },
+        "aboutArrowMeaning": { "type": "string" },
+        "contactEmail": { "type": "string" },
+        "contactPhone": { "type": "string" },
+        "contactAddress": { "type": "string" }
+      }
+    },
+    "services": {
+      "title": "Service Item",
+      "description": "Marketing digital and logistique événementielle services",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "shortDescription": { "type": "string" },
+        "fullDescription": { "type": "string" },
+        "iconName": { "type": "string" },
+        "features": { "type": "array", "items": { "type": "string" } },
+        "image": { "type": "string" }
+      },
+      "required": ["id", "title", "category"]
+    },
+    "products": {
+      "title": "Product Item",
+      "description": "Equipment and material catalog for rental",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "dailyRate": { "type": "number" },
+        "stockQuantity": { "type": "number" },
+        "availabilityStatus": { "type": "string" },
+        "specifications": { "type": "object" },
+        "image": { "type": "string" },
+        "isFeatured": { "type": "boolean" }
+      },
+      "required": ["id", "name", "category", "dailyRate"]
+    },
+    "packs": {
+      "title": "Pack Item",
+      "description": "Turnkey offers and bundled packages",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "module": { "type": "string" },
+        "tagline": { "type": "string" },
+        "priceEstimate": { "type": "string" },
+        "badge": { "type": "string" },
+        "description": { "type": "string" },
+        "inclusions": { "type": "array", "items": { "type": "string" } },
+        "popular": { "type": "boolean" },
+        "image": { "type": "string" }
+      },
+      "required": ["id", "title", "module"]
+    },
+    "articles": {
+      "title": "Article Item",
+      "description": "Blog posts and news articles",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "slug": { "type": "string" },
+        "category": { "type": "string" },
+        "excerpt": { "type": "string" },
+        "content": { "type": "string" },
+        "author": { "type": "string" },
+        "authorRole": { "type": "string" },
+        "date": { "type": "string" },
+        "readTime": { "type": "string" },
+        "image": { "type": "string" },
+        "published": { "type": "boolean" },
+        "views": { "type": "number" }
+      },
+      "required": ["id", "title", "category"]
+    },
+    "comments": {
+      "title": "Comment Item",
+      "description": "Public comments on blog articles pending moderation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "articleId": { "type": "string" },
+        "articleTitle": { "type": "string" },
+        "authorName": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "authorName", "content", "status"]
+    },
+    "devis": {
+      "title": "Quote Request Item",
+      "description": "Devis and project inquiries submitted by prospective clients",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "clientName": { "type": "string" },
+        "company": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "moduleType": { "type": "string" },
+        "budgetRange": { "type": "string" },
+        "targetDate": { "type": "string" },
+        "eventLocation": { "type": "string" },
+        "description": { "type": "string" },
+        "selectedItems": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "clientName", "email", "phone"]
+    },
+    "prereservations": {
+      "title": "Pre-reservation Item",
+      "description": "Equipment pre-reservations with duration and pricing estimates",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "clientName": { "type": "string" },
+        "company": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "equipmentDetails": { "type": "array" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "durationDays": { "type": "number" },
+        "totalEstimate": { "type": "number" },
+        "location": { "type": "string" },
+        "notes": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "clientName", "email", "phone"]
+    }
+  }
+}

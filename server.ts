@@ -45,8 +45,10 @@ import {
   updatePreReservationStatus,
   deletePreReservation,
   getAdminPassword,
-  updateAdminPassword
+  updateAdminPassword,
+  resetAndReseedFirestore
 } from "./src/lib/firebaseStore.js";
+import { resolvedFirebaseConfig } from "./src/lib/firebase.js";
 
 const PORT = 3000;
 
@@ -69,9 +71,12 @@ async function startServer() {
   let ADMIN_PASS = await getAdminPassword();
 
   // Simple Admin Auth Token Check Helper
-  const checkAdmin = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const checkAdmin = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (!ADMIN_PASS) {
+      ADMIN_PASS = await getAdminPassword();
+    }
     const authHeader = req.headers.authorization;
-    if (authHeader === `Bearer ${ADMIN_PASS}` || req.headers["x-admin-key"] === ADMIN_PASS) {
+    if (ADMIN_PASS && (authHeader === `Bearer ${ADMIN_PASS}` || req.headers["x-admin-key"] === ADMIN_PASS)) {
       return next();
     }
     return res.status(401).json({ error: "Accès non autorisé. Session administrateur invalide." });
@@ -130,12 +135,45 @@ async function startServer() {
     }
   });
 
+  // Admin Status Check (Returns whether password has been configured)
+  app.get("/api/admin/status", async (_req, res) => {
+    try {
+      const currentPass = await getAdminPassword();
+      res.json({ isConfigured: !!currentPass });
+    } catch (err) {
+      res.json({ isConfigured: false });
+    }
+  });
+
+  // Admin Initial Password Setup (First-time password setup)
+  app.post("/api/admin/setup-password", async (req, res) => {
+    try {
+      const currentPass = await getAdminPassword();
+      if (currentPass) {
+        return res.status(400).json({ error: "Le mot de passe administrateur a déjà été configuré." });
+      }
+      const { newPassword } = req.body;
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ error: "Le mot de passe doit contenir au moins 6 caractères." });
+      }
+      await updateAdminPassword(newPassword);
+      ADMIN_PASS = newPassword;
+      res.json({ success: true, token: newPassword, user: "Administrateur Forward One" });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || "Erreur lors de la configuration du mot de passe." });
+    }
+  });
+
   // Admin Auth Login
   app.post("/api/admin/login", async (req, res) => {
     const { password } = req.body;
-    ADMIN_PASS = await getAdminPassword();
-    if (password === ADMIN_PASS) {
-      res.json({ success: true, token: ADMIN_PASS, user: "Administrateur Forward One" });
+    const currentPass = await getAdminPassword();
+    if (!currentPass) {
+      return res.status(400).json({ isConfigured: false, error: "Aucun mot de passe n'est configuré. Veuillez définir le mot de passe administrateur." });
+    }
+    if (password === currentPass) {
+      ADMIN_PASS = currentPass;
+      res.json({ success: true, token: currentPass, user: "Administrateur Forward One" });
     } else {
       res.status(401).json({ success: false, error: "Mot de passe administrateur incorrect." });
     }
@@ -154,6 +192,32 @@ async function startServer() {
     } catch (err) {
       res.status(500).json({ error: "Erreur lors de la mise à jour." });
     }
+  });
+
+  // Admin Reset Database
+  app.post("/api/admin/reset-db", checkAdmin, async (_req, res) => {
+    try {
+      const result = await resetAndReseedFirestore();
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || "Erreur lors de la réinitialisation de la base de données." });
+    }
+  });
+
+  // Admin Get Firebase Config (for Vercel integration)
+  app.get("/api/admin/firebase-config", checkAdmin, (_req, res) => {
+    res.json({
+      config: resolvedFirebaseConfig,
+      envSnippet: {
+        VITE_FIREBASE_PROJECT_ID: resolvedFirebaseConfig.projectId,
+        VITE_FIREBASE_APP_ID: resolvedFirebaseConfig.appId,
+        VITE_FIREBASE_API_KEY: resolvedFirebaseConfig.apiKey,
+        VITE_FIREBASE_AUTH_DOMAIN: resolvedFirebaseConfig.authDomain,
+        VITE_FIREBASE_DATABASE_ID: resolvedFirebaseConfig.firestoreDatabaseId,
+        VITE_FIREBASE_STORAGE_BUCKET: resolvedFirebaseConfig.storageBucket,
+        VITE_FIREBASE_MESSAGING_SENDER_ID: resolvedFirebaseConfig.messagingSenderId
+      }
+    });
   });
 
   // Admin Stats

@@ -48,20 +48,24 @@ const COLLECTIONS = {
 // ... (keep seedFirestoreIfEmpty)
 
 // ================= ADMIN SETTINGS =================
-export async function getAdminPassword(): Promise<string> {
+export async function getAdminPassword(): Promise<string | null> {
   try {
     const snap = await getDoc(doc(db, COLLECTIONS.ADMIN_SETTINGS, "password"));
-    if (snap.exists()) {
+    if (snap.exists() && snap.data().password) {
       return snap.data().password as string;
     }
   } catch (err) {
     console.error("[Firebase] Error fetching admin password:", err);
   }
-  return "AAAAAAAA"; // Default fallback
+  return null; // Null means no password configured yet
 }
 
 export async function updateAdminPassword(password: string): Promise<void> {
-  await setDoc(doc(db, COLLECTIONS.ADMIN_SETTINGS, "password"), { password }, { merge: true });
+  await setDoc(doc(db, COLLECTIONS.ADMIN_SETTINGS, "password"), {
+    password,
+    isConfigured: true,
+    updatedAt: new Date().toISOString()
+  }, { merge: true });
 }
 
 /**
@@ -69,10 +73,6 @@ export async function updateAdminPassword(password: string): Promise<void> {
  */
 export async function seedFirestoreIfEmpty() {
   try {
-    // 0. Ensure Admin Password is set in Firestore
-    const adminPassRef = doc(db, COLLECTIONS.ADMIN_SETTINGS, "password");
-    await setDoc(adminPassRef, { password: "AAAAAAAA" }, { merge: true });
-
     // 1. Site Content
     const siteContentRef = doc(db, COLLECTIONS.SITE_CONTENT, "main");
     const siteContentSnap = await getDoc(siteContentRef);
@@ -129,6 +129,79 @@ export async function seedFirestoreIfEmpty() {
     console.log("[Firebase] Firestore initialization/verification complete.");
   } catch (err) {
     console.error("[Firebase] Error seeding Firestore:", err);
+  }
+}
+
+/**
+ * Completely wipe and re-initialize Firestore collections.
+ */
+export async function resetAndReseedFirestore(): Promise<{ success: boolean; message: string }> {
+  try {
+    console.log("[Firebase] Starting database reset & re-seed...");
+
+    // 1. Reset Site Content
+    await setDoc(doc(db, COLLECTIONS.SITE_CONTENT, "main"), initialSiteContent);
+
+    // 2. Clear & Seed Services
+    const servicesSnap = await getDocs(collection(db, COLLECTIONS.SERVICES));
+    for (const d of servicesSnap.docs) {
+      await deleteDoc(d.ref);
+    }
+    for (const service of initialServices) {
+      await setDoc(doc(db, COLLECTIONS.SERVICES, service.id), service);
+    }
+
+    // 3. Clear & Seed Products
+    const productsSnap = await getDocs(collection(db, COLLECTIONS.PRODUCTS));
+    for (const d of productsSnap.docs) {
+      await deleteDoc(d.ref);
+    }
+    for (const prod of initialProducts) {
+      await setDoc(doc(db, COLLECTIONS.PRODUCTS, prod.id), prod);
+    }
+
+    // 4. Clear & Seed Packs
+    const packsSnap = await getDocs(collection(db, COLLECTIONS.PACKS));
+    for (const d of packsSnap.docs) {
+      await deleteDoc(d.ref);
+    }
+    for (const pack of initialPacks) {
+      await setDoc(doc(db, COLLECTIONS.PACKS, pack.id), pack);
+    }
+
+    // 5. Clear & Seed Articles
+    const articlesSnap = await getDocs(collection(db, COLLECTIONS.ARTICLES));
+    for (const d of articlesSnap.docs) {
+      await deleteDoc(d.ref);
+    }
+    for (const art of initialArticles) {
+      await setDoc(doc(db, COLLECTIONS.ARTICLES, art.id), art);
+    }
+
+    // 6. Clear & Seed Comments
+    const commentsSnap = await getDocs(collection(db, COLLECTIONS.COMMENTS));
+    for (const d of commentsSnap.docs) {
+      await deleteDoc(d.ref);
+    }
+    for (const com of initialComments) {
+      await setDoc(doc(db, COLLECTIONS.COMMENTS, com.id), com);
+    }
+
+    // 7. Clear Devis & Prereservations
+    const devisSnap = await getDocs(collection(db, COLLECTIONS.DEVIS));
+    for (const d of devisSnap.docs) {
+      await deleteDoc(d.ref);
+    }
+    const resSnap = await getDocs(collection(db, COLLECTIONS.PRERESERVATIONS));
+    for (const d of resSnap.docs) {
+      await deleteDoc(d.ref);
+    }
+
+    console.log("[Firebase] Database reset successfully completed.");
+    return { success: true, message: "La base de données Firestore a été réinitialisée avec succès." };
+  } catch (err: any) {
+    console.error("[Firebase] Reset error:", err);
+    throw new Error(err.message || "Erreur lors de la réinitialisation de la base de données.");
   }
 }
 

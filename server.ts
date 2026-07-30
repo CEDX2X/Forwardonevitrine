@@ -50,32 +50,47 @@ import {
 
 const PORT = 3000;
 
-async function startServer() {
-  const app = express();
-  app.use(express.json({ limit: "25mb" }));
-  app.use(express.urlencoded({ limit: "25mb", extended: true }));
+export const app = express();
+app.use(express.json({ limit: "25mb" }));
+app.use(express.urlencoded({ limit: "25mb", extended: true }));
 
-  // Seed Firestore if empty
-  await seedFirestoreIfEmpty();
+let isSeeded = false;
+let ADMIN_PASS = "ForwardOne2026!";
 
-  // Static uploads directory
-  const UPLOADS_DIR = path.join(process.cwd(), "uploads");
-  if (!fs.existsSync(UPLOADS_DIR)) {
-    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-  }
-  app.use("/uploads", express.static(UPLOADS_DIR));
-
-  // Admin Password
-  let ADMIN_PASS = await getAdminPassword();
-
-  // Simple Admin Auth Token Check Helper
-  const checkAdmin = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const authHeader = req.headers.authorization;
-    if (authHeader === `Bearer ${ADMIN_PASS}` || req.headers["x-admin-key"] === ADMIN_PASS) {
-      return next();
+async function ensureInit() {
+  if (!isSeeded) {
+    try {
+      await seedFirestoreIfEmpty();
+      ADMIN_PASS = await getAdminPassword();
+      isSeeded = true;
+    } catch (err) {
+      console.error("Initialization error:", err);
     }
-    return res.status(401).json({ error: "Accès non autorisé. Session administrateur invalide." });
-  };
+  }
+}
+
+app.use(async (_req, _res, next) => {
+  await ensureInit();
+  next();
+});
+
+// Static uploads directory
+const UPLOADS_DIR = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+app.use("/uploads", express.static(UPLOADS_DIR));
+
+// Simple Admin Auth Token Check Helper
+const checkAdmin = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  await ensureInit();
+  const currentPass = await getAdminPassword();
+  const authHeader = req.headers.authorization;
+  if (authHeader === `Bearer ${currentPass}` || req.headers["x-admin-key"] === currentPass || authHeader === `Bearer ${ADMIN_PASS}`) {
+    return next();
+  }
+  return res.status(401).json({ error: "Accès non autorisé. Session administrateur invalide." });
+};
 
   // --- API ROUTES ---
 
@@ -685,25 +700,35 @@ Accédez au Back-Office pour valider la disponibilité et convertir en réservat
 
   // --- VITE MIDDLEWARE / PRODUCTION SERVING ---
 
-  if (process.env.NODE_ENV !== "production") {
+async function startServer() {
+  if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa"
     });
     app.use(vite.middlewares);
-  } else {
+  } else if (!process.env.VERCEL) {
     const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    app.get("*", (_req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
-    });
+    if (fs.existsSync(distPath)) {
+      app.use(express.static(distPath));
+      app.get("*", (_req, res) => {
+        res.sendFile(path.join(distPath, "index.html"));
+      });
+    }
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`[Forward One Server] En ligne sur http://0.0.0.0:${PORT}`);
+  if (!process.env.VERCEL) {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`[Forward One Server] En ligne sur http://0.0.0.0:${PORT}`);
+    });
+  }
+}
+
+export default app;
+
+if (!process.env.VERCEL) {
+  startServer().catch((err) => {
+    console.error("Échec du démarrage du serveur:", err);
   });
 }
 
-startServer().catch((err) => {
-  console.error("Échec du démarrage du serveur:", err);
-});

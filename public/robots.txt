@@ -1,4 +1,4 @@
-# Robots.txt for Forward One (https://forwardoneglobal.com)
+# Robots.txt for Forward One Global (https://forwardoneglobal.com)
 # Agence N°1 en Marketing Digital & Logistique Événementielle au Cameroun
 
 User-agent: *
@@ -28,4 +28,5 @@ Allow: /
 
 # XML Sitemaps
 Sitemap: https://forwardoneglobal.com/sitemap.xml
+Sitemap: https://www.forwardoneglobal.com/sitemap.xml
 Sitemap: https://forwardonevitrine.vercel.app/sitemap.xml

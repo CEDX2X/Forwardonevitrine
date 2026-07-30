@@ -1,21 +1,31 @@
-# Robots.txt for Forward One (https://forwardone.cm)
-# Forward One - Marketing Digital & Logistique Événementielle au Cameroun
+# Robots.txt for Forward One (https://forwardoneglobal.com)
+# Agence N°1 en Marketing Digital & Logistique Événementielle au Cameroun
 
 User-agent: *
 Allow: /
-Allow: /#services
-Allow: /#catalog
-Allow: /#packs
-Allow: /#blog
-Allow: /#testimonials
-Allow: /#videos
-Allow: /#about
-
-# Disallow admin dashboard and private API routes
 Disallow: /admin
-Disallow: /api/admin/
-Disallow: /api/prereservations
-Disallow: /api/devis
+Disallow: /admin/
+Disallow: /api/
+Disallow: /*?*token=
+Disallow: /*?*admin=
 
-# Sitemap location
-Sitemap: https://forwardone.cm/sitemap.xml
+# Specific Search Engine Bots Optimization
+User-agent: Googlebot
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+# XML Sitemaps
+Sitemap: https://forwardoneglobal.com/sitemap.xml
+Sitemap: https://forwardonevitrine.vercel.app/sitemap.xml

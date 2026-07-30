@@ -6,8 +6,6 @@ Allow: /
 Disallow: /admin
 Disallow: /admin/
 Disallow: /api/
-Disallow: /*?*token=
-Disallow: /*?*admin=
 
 # Specific Search Engine Bots Optimization
 User-agent: Googlebot
@@ -26,7 +24,5 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
-# XML Sitemaps
+# XML Sitemap
 Sitemap: https://forwardoneglobal.com/sitemap.xml
-Sitemap: https://www.forwardoneglobal.com/sitemap.xml
-Sitemap: https://forwardonevitrine.vercel.app/sitemap.xml

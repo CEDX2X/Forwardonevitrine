@@ -61,12 +61,13 @@ async function startServer() {
   // Seed Firestore if empty
   await seedFirestoreIfEmpty();
 
-  // Static uploads directory
+  // Static uploads & public directory
   const UPLOADS_DIR = path.join(process.cwd(), "uploads");
   if (!fs.existsSync(UPLOADS_DIR)) {
     fs.mkdirSync(UPLOADS_DIR, { recursive: true });
   }
   app.use("/uploads", express.static(UPLOADS_DIR));
+  app.use(express.static(path.join(process.cwd(), "public")));
 
   // Admin Password
   let ADMIN_PASS = await getAdminPassword();
@@ -727,21 +728,23 @@ Accédez au Back-Office pour valider la disponibilité et convertir en réservat
 
   // --- SEO ROUTES (robots.txt & sitemap.xml) ---
   app.get("/robots.txt", (_req, res) => {
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.setHeader("Access-Control-Allow-Origin", "*");
     const robotsPath = path.join(process.cwd(), "public", "robots.txt");
     if (fs.existsSync(robotsPath)) {
-      res.header("Content-Type", "text/plain");
       return res.sendFile(robotsPath);
     }
-    res.type("text/plain").send("User-agent: *\nAllow: /\nDisallow: /admin\nSitemap: https://forwardone.cm/sitemap.xml");
+    res.type("text/plain").send("User-agent: *\nAllow: /\nDisallow: /admin\nSitemap: https://forwardoneglobal.com/sitemap.xml");
   });
 
   app.get("/sitemap.xml", (_req, res) => {
+    res.setHeader("Content-Type", "application/xml; charset=utf-8");
+    res.setHeader("Access-Control-Allow-Origin", "*");
     const sitemapPath = path.join(process.cwd(), "public", "sitemap.xml");
     if (fs.existsSync(sitemapPath)) {
-      res.header("Content-Type", "application/xml");
       return res.sendFile(sitemapPath);
     }
-    res.status(404).send("Sitemap non trouvé");
+    res.status(404).setHeader("Content-Type", "application/xml; charset=utf-8").send("<?xml version=\"1.0\" encoding=\"UTF-8\"?><error>Sitemap non trouvé</error>");
   });
 
   // --- VITE MIDDLEWARE / PRODUCTION SERVING ---

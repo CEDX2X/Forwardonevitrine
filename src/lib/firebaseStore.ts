@@ -14,7 +14,12 @@ import {
   initialPacks,
   initialProducts,
   initialServices,
-  initialSiteContent
+  initialSiteContent,
+  initialServiceCategories,
+  initialHeroSlides,
+  initialPartners,
+  initialTestimonials,
+  initialVideoCards
 } from "../data/initialData";
 import {
   ArticleItem,
@@ -36,8 +41,28 @@ const COLLECTIONS = {
   ARTICLES: "articles",
   COMMENTS: "comments",
   DEVIS: "devis",
-  PRERESERVATIONS: "prereservations"
+  PRERESERVATIONS: "prereservations",
+  ADMIN_SETTINGS: "adminSettings"
 };
+
+// ... (keep seedFirestoreIfEmpty)
+
+// ================= ADMIN SETTINGS =================
+export async function getAdminPassword(): Promise<string> {
+  try {
+    const snap = await getDoc(doc(db, COLLECTIONS.ADMIN_SETTINGS, "password"));
+    if (snap.exists()) {
+      return snap.data().password as string;
+    }
+  } catch (err) {
+    console.error("[Firebase] Error fetching admin password:", err);
+  }
+  return "Forwardteamkylyo"; // Default fallback
+}
+
+export async function updateAdminPassword(password: string): Promise<void> {
+  await setDoc(doc(db, COLLECTIONS.ADMIN_SETTINGS, "password"), { password }, { merge: true });
+}
 
 /**
  * Seed Firebase Firestore with initial data if collections are empty.
@@ -108,7 +133,41 @@ export async function getSiteContent(): Promise<SiteContent> {
   try {
     const snap = await getDoc(doc(db, COLLECTIONS.SITE_CONTENT, "main"));
     if (snap.exists()) {
-      return snap.data() as SiteContent;
+      const data = snap.data() as SiteContent;
+      if (!data.serviceCategories || data.serviceCategories.length === 0) {
+        data.serviceCategories = initialServiceCategories;
+      }
+      if (!data.heroSlides || data.heroSlides.length === 0) {
+        data.heroSlides = initialHeroSlides;
+      }
+      if (!data.partners || data.partners.length === 0) {
+        data.partners = initialPartners;
+      }
+      if (data.partnersBannerTitle === undefined) {
+        data.partnersBannerTitle = "Nos Partenaires & Marques de Confiance";
+      }
+      if (data.partnersBannerEnabled === undefined) {
+        data.partnersBannerEnabled = true;
+      }
+      if (!data.testimonials || data.testimonials.length === 0) {
+        data.testimonials = initialTestimonials;
+      }
+      if (!data.testimonialsTitle) {
+        data.testimonialsTitle = "Ce Que Disent Nos Clients";
+      }
+      if (!data.testimonialsSubtitle) {
+        data.testimonialsSubtitle = "La satisfaction de nos partenaires est la preuve irréfutable de notre quête d’excellence.";
+      }
+      if (!data.videoCards || data.videoCards.length === 0) {
+        data.videoCards = initialVideoCards;
+      }
+      if (!data.videoSectionTitle) {
+        data.videoSectionTitle = "Forward One en Action";
+      }
+      if (!data.videoSectionSubtitle) {
+        data.videoSectionSubtitle = "Découvrez nos réalisations en vidéos : régies événements, tournages, shows lumière et créations web.";
+      }
+      return data;
     }
   } catch (err) {
     console.error("[Firebase] Error fetching siteContent:", err);
@@ -126,6 +185,7 @@ export async function updateSiteContent(data: Partial<SiteContent>): Promise<Sit
 // ================= SERVICES =================
 export async function getServices(): Promise<ServiceItem[]> {
   try {
+    await seedFirestoreIfEmpty();
     const snap = await getDocs(collection(db, COLLECTIONS.SERVICES));
     if (!snap.empty) {
       return snap.docs.map((doc) => doc.data() as ServiceItem);
@@ -143,7 +203,7 @@ export async function createService(service: ServiceItem): Promise<ServiceItem> 
 
 export async function updateService(id: string, data: Partial<ServiceItem>): Promise<ServiceItem> {
   const ref = doc(db, COLLECTIONS.SERVICES, id);
-  await updateDoc(ref, data);
+  await setDoc(ref, data, { merge: true });
   const updatedSnap = await getDoc(ref);
   return updatedSnap.data() as ServiceItem;
 }
@@ -155,6 +215,7 @@ export async function deleteService(id: string): Promise<void> {
 // ================= PRODUCTS =================
 export async function getProducts(): Promise<ProductItem[]> {
   try {
+    await seedFirestoreIfEmpty();
     const snap = await getDocs(collection(db, COLLECTIONS.PRODUCTS));
     if (!snap.empty) {
       return snap.docs.map((doc) => doc.data() as ProductItem);
@@ -172,7 +233,7 @@ export async function createProduct(product: ProductItem): Promise<ProductItem> 
 
 export async function updateProduct(id: string, data: Partial<ProductItem>): Promise<ProductItem> {
   const ref = doc(db, COLLECTIONS.PRODUCTS, id);
-  await updateDoc(ref, data);
+  await setDoc(ref, data, { merge: true });
   const updatedSnap = await getDoc(ref);
   return updatedSnap.data() as ProductItem;
 }
@@ -184,6 +245,7 @@ export async function deleteProduct(id: string): Promise<void> {
 // ================= PACKS =================
 export async function getPacks(): Promise<PackItem[]> {
   try {
+    await seedFirestoreIfEmpty();
     const snap = await getDocs(collection(db, COLLECTIONS.PACKS));
     if (!snap.empty) {
       return snap.docs.map((doc) => doc.data() as PackItem);
@@ -201,7 +263,7 @@ export async function createPack(pack: PackItem): Promise<PackItem> {
 
 export async function updatePack(id: string, data: Partial<PackItem>): Promise<PackItem> {
   const ref = doc(db, COLLECTIONS.PACKS, id);
-  await updateDoc(ref, data);
+  await setDoc(ref, data, { merge: true });
   const updatedSnap = await getDoc(ref);
   return updatedSnap.data() as PackItem;
 }
@@ -213,6 +275,7 @@ export async function deletePack(id: string): Promise<void> {
 // ================= ARTICLES =================
 export async function getArticles(): Promise<ArticleItem[]> {
   try {
+    await seedFirestoreIfEmpty();
     const snap = await getDocs(collection(db, COLLECTIONS.ARTICLES));
     if (!snap.empty) {
       const list = snap.docs.map((doc) => doc.data() as ArticleItem);
@@ -231,7 +294,7 @@ export async function createArticle(article: ArticleItem): Promise<ArticleItem> 
 
 export async function updateArticle(id: string, data: Partial<ArticleItem>): Promise<ArticleItem> {
   const ref = doc(db, COLLECTIONS.ARTICLES, id);
-  await updateDoc(ref, data);
+  await setDoc(ref, data, { merge: true });
   const updatedSnap = await getDoc(ref);
   return updatedSnap.data() as ArticleItem;
 }
@@ -243,6 +306,7 @@ export async function deleteArticle(id: string): Promise<void> {
 // ================= COMMENTS =================
 export async function getComments(): Promise<CommentItem[]> {
   try {
+    await seedFirestoreIfEmpty();
     const snap = await getDocs(collection(db, COLLECTIONS.COMMENTS));
     if (!snap.empty) {
       const list = snap.docs.map((doc) => doc.data() as CommentItem);

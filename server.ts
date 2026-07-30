@@ -43,7 +43,9 @@ import {
   getPreReservations,
   createPreReservation,
   updatePreReservationStatus,
-  deletePreReservation
+  deletePreReservation,
+  getAdminPassword,
+  updateAdminPassword
 } from "./src/lib/firebaseStore.js";
 
 const PORT = 3000;
@@ -63,8 +65,10 @@ async function startServer() {
   }
   app.use("/uploads", express.static(UPLOADS_DIR));
 
+  // Admin Password
+  let ADMIN_PASS = await getAdminPassword();
+
   // Simple Admin Auth Token Check Helper
-  const ADMIN_PASS = "Forwardteamkylyo";
   const checkAdmin = (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const authHeader = req.headers.authorization;
     if (authHeader === `Bearer ${ADMIN_PASS}` || req.headers["x-admin-key"] === ADMIN_PASS) {
@@ -87,10 +91,16 @@ async function startServer() {
         return res.status(400).json({ error: "Aucune donnée d'image transmise." });
       }
 
+      // If fileData is already a Data URL (e.g. data:image/jpeg;base64,...), return it directly.
+      // This ensures the image is stored directly inside Firestore and never disappears when the container restarts.
+      if (typeof fileData === "string" && (fileData.startsWith("data:image/") || fileData.startsWith("data:video/"))) {
+        return res.json({ success: true, url: fileData });
+      }
+
       let buffer: Buffer;
       let ext = "png";
 
-      if (fileData.startsWith("data:")) {
+      if (typeof fileData === "string" && fileData.startsWith("data:")) {
         const matches = fileData.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
         if (matches && matches.length === 3) {
           ext = matches[1] === "jpeg" ? "jpg" : matches[1];
@@ -99,8 +109,10 @@ async function startServer() {
           const parts = fileData.split(",");
           buffer = Buffer.from(parts[1] || parts[0], "base64");
         }
-      } else {
+      } else if (typeof fileData === "string") {
         buffer = Buffer.from(fileData, "base64");
+      } else {
+        return res.status(400).json({ error: "Format d'image non valide." });
       }
 
       const safeExt = ext.replace(/[^a-zA-Z0-9]/g, "");
@@ -108,9 +120,10 @@ async function startServer() {
       const targetPath = path.join(UPLOADS_DIR, safeFileName);
 
       fs.writeFileSync(targetPath, buffer);
-      const publicUrl = `/uploads/${safeFileName}`;
-
-      res.json({ success: true, url: publicUrl });
+      
+      // Form a persistent data URL fallback
+      const dataUrl = `data:image/${safeExt || "png"};base64,${buffer.toString("base64")}`;
+      res.json({ success: true, url: dataUrl });
     } catch (err: any) {
       console.error("Upload handler error:", err);
       res.status(500).json({ error: "Erreur serveur lors de l'enregistrement de l'image." });
@@ -124,6 +137,21 @@ async function startServer() {
       res.json({ success: true, token: ADMIN_PASS, user: "Administrateur Forward One" });
     } else {
       res.status(401).json({ success: false, error: "Mot de passe administrateur incorrect." });
+    }
+  });
+
+  // Admin Update Password
+  app.put("/api/admin/password", checkAdmin, async (req, res) => {
+    try {
+      const { newPassword } = req.body;
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ error: "Mot de passe trop court." });
+      }
+      await updateAdminPassword(newPassword);
+      ADMIN_PASS = newPassword; // Update in-memory password
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: "Erreur lors de la mise à jour." });
     }
   });
 
@@ -634,6 +662,25 @@ Accédez au Back-Office pour valider la disponibilité et convertir en réservat
     } catch (err) {
       res.status(500).json({ error: "Erreur lors de la suppression de la pré-réservation" });
     }
+  });
+
+  // --- SEO ROUTES (robots.txt & sitemap.xml) ---
+  app.get("/robots.txt", (_req, res) => {
+    const robotsPath = path.join(process.cwd(), "public", "robots.txt");
+    if (fs.existsSync(robotsPath)) {
+      res.header("Content-Type", "text/plain");
+      return res.sendFile(robotsPath);
+    }
+    res.type("text/plain").send("User-agent: *\nAllow: /\nDisallow: /admin\nSitemap: https://forwardone.cm/sitemap.xml");
+  });
+
+  app.get("/sitemap.xml", (_req, res) => {
+    const sitemapPath = path.join(process.cwd(), "public", "sitemap.xml");
+    if (fs.existsSync(sitemapPath)) {
+      res.header("Content-Type", "application/xml");
+      return res.sendFile(sitemapPath);
+    }
+    res.status(404).send("Sitemap non trouvé");
   });
 
   // --- VITE MIDDLEWARE / PRODUCTION SERVING ---

@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ImageUploader } from './ImageUploader';
+import { VideoUploader } from './VideoUploader';
+import { AdminPasswordForm } from './AdminPasswordForm';
+import { StatusModal } from './StatusModal';
 import {
   AdminStats,
   ArticleItem,
@@ -9,9 +12,14 @@ import {
   PreReservationItem,
   QuoteRequestItem,
   ServiceItem,
-  SiteContent
+  SiteContent,
+  PartnerItem,
+  TestimonialItem,
+  VideoCardItem
 } from '../../types';
+import { initialServiceCategories, initialPartners, initialTestimonials, initialVideoCards } from '../../data/initialData';
 import { ForwardOneLogo } from '../ForwardOneLogo';
+import { PartnersBanner } from '../PartnersBanner';
 import {
   LayoutDashboard,
   FileText,
@@ -30,9 +38,18 @@ import {
   RefreshCw,
   Mail,
   Eye,
+  EyeOff,
   CheckCircle2,
   Clock,
-  ShieldCheck
+  ShieldCheck,
+  Search,
+  MessageCircle,
+  Handshake,
+  Globe,
+  ExternalLink,
+  Video,
+  Star,
+  Play
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -47,7 +64,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onRefreshPublicData
 }) => {
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'siteContent' | 'services' | 'articles' | 'products' | 'packs' | 'comments' | 'devis' | 'reservations'
+    'overview' | 'siteContent' | 'partners' | 'services' | 'articles' | 'products' | 'packs' | 'comments' | 'devis' | 'reservations' | 'settings'
   >('overview');
 
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -59,14 +76,203 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [devis, setDevis] = useState<QuoteRequestItem[]>([]);
   const [reservations, setReservations] = useState<PreReservationItem[]>([]);
+  const [devisSearch, setDevisSearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   // Modals / Forms States
   const [editingService, setEditingService] = useState<Partial<ServiceItem> | null>(null);
+  const [serviceFeatures, setServiceFeatures] = useState<string[]>(['']);
+
+  const handleOpenNewService = () => {
+    setServiceFeatures(['']);
+    setEditingService({
+      title: '',
+      category: 'Marketing Digital',
+      badge: 'OFFRE DIGITAL',
+      tagline: '',
+      priceEstimate: 'Sur devis',
+      popular: false,
+      shortDescription: '',
+      fullDescription: '',
+      iconName: 'Sparkles',
+      features: [],
+      image: ''
+    });
+  };
+
+  const handleOpenEditService = (serv: ServiceItem) => {
+    const feats = serv.features && serv.features.length > 0 ? [...serv.features] : [''];
+    setServiceFeatures(feats);
+    setEditingService(serv);
+  };
+
   const [editingArticle, setEditingArticle] = useState<Partial<ArticleItem> | null>(null);
   const [editingProduct, setEditingProduct] = useState<Partial<ProductItem> | null>(null);
+  const [editingPartner, setEditingPartner] = useState<Partial<PartnerItem> | null>(null);
+  const [specKeys, setSpecKeys] = useState<string[]>(['', '', '', '', '']);
+  const [specValues, setSpecValues] = useState<string[]>(['', '', '', '', '']);
+
+  const handleOpenNewPartner = () => {
+    setEditingPartner({
+      name: '',
+      logo: '',
+      category: 'Partenaire Technique',
+      website: '',
+      visible: true
+    });
+  };
+
+  const handleOpenEditPartner = (partner: PartnerItem) => {
+    setEditingPartner(partner);
+  };
+
+  const handleSavePartner = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPartner || !siteContent) return;
+
+    const currentPartners = siteContent.partners ? [...siteContent.partners] : [...initialPartners];
+    let updatedPartners: PartnerItem[];
+
+    if (editingPartner.id) {
+      updatedPartners = currentPartners.map(p => p.id === editingPartner.id ? (editingPartner as PartnerItem) : p);
+    } else {
+      const newPartner: PartnerItem = {
+        id: `partner-${Date.now()}`,
+        name: editingPartner.name || 'Nouveau Partenaire',
+        logo: editingPartner.logo || '',
+        category: editingPartner.category || 'Partenaire',
+        website: editingPartner.website || '',
+        visible: editingPartner.visible !== false
+      };
+      updatedPartners = [newPartner, ...currentPartners];
+    }
+
+    const updatedSiteContent = {
+      ...siteContent,
+      partners: updatedPartners
+    };
+
+    try {
+      const res = await fetch('/api/site-content', {
+        method: 'PUT',
+        headers: fetchHeaders,
+        body: JSON.stringify(updatedSiteContent)
+      });
+      if (res.ok) {
+        setEditingPartner(null);
+        setSiteContent(updatedSiteContent);
+        setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Partenaire enregistré avec succès !' });
+        loadAllData();
+        if (onRefreshPublicData) onRefreshPublicData();
+      }
+    } catch (e) {
+      setStatusModal({ isOpen: true, type: 'error', title: 'Erreur', message: 'Erreur lors de la sauvegarde du partenaire.' });
+    }
+  };
+
+  const handleDeletePartner = (id: string, partnerName: string) => {
+    setDeleteConfirm({
+      isOpen: true,
+      title: 'Supprimer le partenaire',
+      message: `Êtes-vous sûr de vouloir retirer "${partnerName}" du bandeau des partenaires ?`,
+      onConfirm: async () => {
+        if (!siteContent) return;
+        const updatedPartners = (siteContent.partners || []).filter(p => p.id !== id);
+        const updatedSiteContent = { ...siteContent, partners: updatedPartners };
+        await fetch('/api/site-content', {
+          method: 'PUT',
+          headers: fetchHeaders,
+          body: JSON.stringify(updatedSiteContent)
+        });
+        setSiteContent(updatedSiteContent);
+        loadAllData();
+        if (onRefreshPublicData) onRefreshPublicData();
+        setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Partenaire retiré.' });
+      }
+    });
+  };
+
+  const handleTogglePartnerVisibility = async (partner: PartnerItem) => {
+    if (!siteContent) return;
+    const updatedPartners = (siteContent.partners || []).map(p => 
+      p.id === partner.id ? { ...p, visible: !p.visible } : p
+    );
+    const updatedSiteContent = { ...siteContent, partners: updatedPartners };
+    setSiteContent(updatedSiteContent);
+    await fetch('/api/site-content', {
+      method: 'PUT',
+      headers: fetchHeaders,
+      body: JSON.stringify(updatedSiteContent)
+    });
+    if (onRefreshPublicData) onRefreshPublicData();
+  };
+
+  const handleResetDefaultPartners = async () => {
+    if (!siteContent) return;
+    setDeleteConfirm({
+      isOpen: true,
+      title: 'Réinitialiser les partenaires',
+      message: 'Voulez-vous réinitialiser la liste avec les 8 partenaires et marques par défaut ?',
+      onConfirm: async () => {
+        const updatedSiteContent = { ...siteContent, partners: initialPartners };
+        setSiteContent(updatedSiteContent);
+        await fetch('/api/site-content', {
+          method: 'PUT',
+          headers: fetchHeaders,
+          body: JSON.stringify(updatedSiteContent)
+        });
+        loadAllData();
+        if (onRefreshPublicData) onRefreshPublicData();
+        setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Partenaires réinitialisés.' });
+      }
+    });
+  };
+
+  const handleOpenNewProduct = () => {
+    setSpecKeys(['', '', '', '', '']);
+    setSpecValues(['', '', '', '', '']);
+    setEditingProduct({ name: '', category: 'Sonorisation', dailyRate: 50000, stockQuantity: 5, availabilityStatus: 'disponible', specifications: {}, isFeatured: false, image: '' });
+  };
+
+  const handleOpenEditProduct = (prod: ProductItem) => {
+    const entries = Object.entries(prod.specifications || {});
+    const keys = ['', '', '', '', ''];
+    const values = ['', '', '', '', ''];
+    entries.slice(0, 5).forEach(([k, v], idx) => {
+      keys[idx] = k;
+      values[idx] = v;
+    });
+    setSpecKeys(keys);
+    setSpecValues(values);
+    setEditingProduct(prod);
+  };
   const [editingPack, setEditingPack] = useState<Partial<PackItem> | null>(null);
+  const [packInclusions, setPackInclusions] = useState<string[]>(['']);
+
+  const handleOpenNewPack = () => {
+    setPackInclusions(['']);
+    setEditingPack({ title: '', module: 'marketing', tagline: '', priceEstimate: 'À partir de 1 500 000 FCFA', badge: 'Sur-mesure', description: '', inclusions: [], popular: false, image: '' });
+  };
+
+  const handleOpenEditPack = (pack: PackItem) => {
+    const incs = pack.inclusions && pack.inclusions.length > 0 ? [...pack.inclusions] : [''];
+    setPackInclusions(incs);
+    setEditingPack(pack);
+  };
   const [viewingReservationEmail, setViewingReservationEmail] = useState<PreReservationItem | null>(null);
+  const [statusModal, setStatusModal] = useState<{
+    isOpen: boolean;
+    type: 'success' | 'error';
+    title: string;
+    message: string;
+  }>({ isOpen: false, type: 'success', title: '', message: '' });
+
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => Promise<void> | void;
+  }>({ isOpen: false, title: '', message: '', onConfirm: async () => {} });
 
   const fetchHeaders = {
     'Authorization': `Bearer ${adminToken}`,
@@ -99,7 +305,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       ]);
 
       if (resStats.ok) setStats(await resStats.json());
-      if (resContent.ok) setSiteContent(await resContent.json());
+      if (resContent.ok) {
+        const contentData = await resContent.json();
+        if (!contentData.serviceCategories || contentData.serviceCategories.length === 0) {
+          contentData.serviceCategories = initialServiceCategories;
+        }
+        setSiteContent(contentData);
+      }
       if (resServices.ok) setServices(await resServices.json());
       if (resArticles.ok) setArticles(await resArticles.json());
       if (resProducts.ok) setProducts(await resProducts.json());
@@ -131,11 +343,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         body: JSON.stringify(siteContent)
       });
       if (res.ok) {
-        alert('Textes du site mis à jour avec succès !');
+        setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Textes du site mis à jour avec succès !' });
         loadAllData();
+        if (onRefreshPublicData) onRefreshPublicData();
       }
     } catch (e) {
-      alert('Erreur lors de la sauvegarde.');
+      setStatusModal({ isOpen: true, type: 'error', title: 'Erreur', message: 'Erreur lors de la sauvegarde.' });
     }
   };
 
@@ -146,25 +359,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const url = isNew ? '/api/services' : `/api/services/${editingService.id}`;
     const method = isNew ? 'POST' : 'PUT';
 
+    const finalFeatures = serviceFeatures.map(s => s.trim()).filter(Boolean);
+    const payload = {
+      ...editingService,
+      features: finalFeatures
+    };
+
     try {
       const res = await fetch(url, {
         method,
         headers: fetchHeaders,
-        body: JSON.stringify(editingService)
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         setEditingService(null);
         loadAllData();
+        if (onRefreshPublicData) onRefreshPublicData();
+        setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Offre / Service enregistré(e) avec succès.' });
       }
     } catch (e) {
-      alert('Erreur enregistrement service.');
+      setStatusModal({ isOpen: true, type: 'error', title: 'Erreur', message: 'Erreur enregistrement service.' });
     }
   };
 
-  const handleDeleteService = async (id: string) => {
-    if (!confirm('Supprimer ce service ?')) return;
-    await fetch(`/api/services/${id}`, { method: 'DELETE', headers: fetchHeaders });
-    loadAllData();
+  const handleDeleteService = (id: string) => {
+    setDeleteConfirm({
+      isOpen: true,
+      title: 'Supprimer le service',
+      message: 'Êtes-vous sûr de vouloir supprimer ce service ? Cette action est irréversible.',
+      onConfirm: async () => {
+        await fetch(`/api/services/${id}`, { method: 'DELETE', headers: fetchHeaders });
+        loadAllData();
+        if (onRefreshPublicData) onRefreshPublicData();
+        setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Service supprimé avec succès.' });
+      }
+    });
   };
 
   const handleSaveArticle = async (e: React.FormEvent) => {
@@ -183,72 +412,122 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       if (res.ok) {
         setEditingArticle(null);
         loadAllData();
+        if (onRefreshPublicData) onRefreshPublicData();
+        setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Article enregistré avec succès.' });
       }
     } catch (e) {
-      alert('Erreur enregistrement article.');
+      setStatusModal({ isOpen: true, type: 'error', title: 'Erreur', message: 'Erreur enregistrement article.' });
     }
   };
 
-  const handleDeleteArticle = async (id: string) => {
-    if (!confirm('Supprimer cet article ?')) return;
-    await fetch(`/api/articles/${id}`, { method: 'DELETE', headers: fetchHeaders });
-    loadAllData();
+  const handleDeleteArticle = (id: string) => {
+    setDeleteConfirm({
+      isOpen: true,
+      title: "Supprimer l'article",
+      message: "Êtes-vous sûr de vouloir supprimer cet article ?",
+      onConfirm: async () => {
+        await fetch(`/api/articles/${id}`, { method: 'DELETE', headers: fetchHeaders });
+        loadAllData();
+        if (onRefreshPublicData) onRefreshPublicData();
+        setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Article supprimé avec succès.' });
+      }
+    });
   };
 
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct) return;
-    const isNew = !editingProduct.id;
-    const url = isNew ? '/api/products' : `/api/products/${editingProduct.id}`;
+
+    const newSpecs: Record<string, string> = {};
+    for (let i = 0; i < 5; i++) {
+      const k = specKeys[i]?.trim();
+      const v = specValues[i]?.trim();
+      if (k) {
+        newSpecs[k] = v || '';
+      }
+    }
+
+    const payload = {
+      ...editingProduct,
+      specifications: newSpecs
+    };
+
+    const isNew = !payload.id;
+    const url = isNew ? '/api/products' : `/api/products/${payload.id}`;
     const method = isNew ? 'POST' : 'PUT';
 
     try {
       const res = await fetch(url, {
         method,
         headers: fetchHeaders,
-        body: JSON.stringify(editingProduct)
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         setEditingProduct(null);
         loadAllData();
+        if (onRefreshPublicData) onRefreshPublicData();
+        setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Produit enregistré avec succès.' });
       }
     } catch (e) {
-      alert('Erreur enregistrement produit.');
+      setStatusModal({ isOpen: true, type: 'error', title: 'Erreur', message: 'Erreur enregistrement produit.' });
     }
   };
 
-  const handleDeleteProduct = async (id: string) => {
-    if (!confirm('Supprimer cet équipement ?')) return;
-    await fetch(`/api/products/${id}`, { method: 'DELETE', headers: fetchHeaders });
-    loadAllData();
+  const handleDeleteProduct = (id: string) => {
+    setDeleteConfirm({
+      isOpen: true,
+      title: "Supprimer le matériel",
+      message: "Êtes-vous sûr de vouloir supprimer cet équipement de votre catalogue ?",
+      onConfirm: async () => {
+        await fetch(`/api/products/${id}`, { method: 'DELETE', headers: fetchHeaders });
+        loadAllData();
+        if (onRefreshPublicData) onRefreshPublicData();
+        setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Matériel supprimé avec succès.' });
+      }
+    });
   };
 
   const handleSavePack = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPack) return;
-    const isNew = !editingPack.id;
-    const url = isNew ? '/api/packs' : `/api/packs/${editingPack.id}`;
+    const finalInclusions = packInclusions.map(s => s.trim()).filter(Boolean);
+    const payload = {
+      ...editingPack,
+      inclusions: finalInclusions
+    };
+    const isNew = !payload.id;
+    const url = isNew ? '/api/packs' : `/api/packs/${payload.id}`;
     const method = isNew ? 'POST' : 'PUT';
 
     try {
       const res = await fetch(url, {
         method,
         headers: fetchHeaders,
-        body: JSON.stringify(editingPack)
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         setEditingPack(null);
         loadAllData();
+        if (onRefreshPublicData) onRefreshPublicData();
+        setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Pack enregistré avec succès.' });
       }
     } catch (e) {
-      alert('Erreur enregistrement pack.');
+      setStatusModal({ isOpen: true, type: 'error', title: 'Erreur', message: 'Erreur enregistrement pack.' });
     }
   };
 
-  const handleDeletePack = async (id: string) => {
-    if (!confirm('Supprimer ce pack ?')) return;
-    await fetch(`/api/packs/${id}`, { method: 'DELETE', headers: fetchHeaders });
-    loadAllData();
+  const handleDeletePack = (id: string) => {
+    setDeleteConfirm({
+      isOpen: true,
+      title: "Supprimer le pack",
+      message: "Êtes-vous sûr de vouloir supprimer ce pack ?",
+      onConfirm: async () => {
+        await fetch(`/api/packs/${id}`, { method: 'DELETE', headers: fetchHeaders });
+        loadAllData();
+        if (onRefreshPublicData) onRefreshPublicData();
+        setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Pack supprimé avec succès.' });
+      }
+    });
   };
 
   const handleModerateComment = async (id: string, status: 'approved' | 'rejected') => {
@@ -260,10 +539,43 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     loadAllData();
   };
 
-  const handleDeleteComment = async (id: string) => {
-    if (!confirm('Supprimer ce commentaire ?')) return;
-    await fetch(`/api/comments/${id}`, { method: 'DELETE', headers: fetchHeaders });
-    loadAllData();
+  const handleDeleteComment = (id: string) => {
+    setDeleteConfirm({
+      isOpen: true,
+      title: "Supprimer le commentaire",
+      message: "Êtes-vous sûr de vouloir supprimer ce commentaire ?",
+      onConfirm: async () => {
+        await fetch(`/api/comments/${id}`, { method: 'DELETE', headers: fetchHeaders });
+        loadAllData();
+        setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Commentaire supprimé avec succès.' });
+      }
+    });
+  };
+
+  const handleDeleteDevis = (id: string, clientName: string) => {
+    setDeleteConfirm({
+      isOpen: true,
+      title: "Supprimer la demande de devis",
+      message: `Êtes-vous sûr de vouloir supprimer le devis de ${clientName} ?`,
+      onConfirm: async () => {
+        await fetch(`/api/devis/${id}`, { method: 'DELETE', headers: fetchHeaders });
+        loadAllData();
+        setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Demande de devis supprimée.' });
+      }
+    });
+  };
+
+  const handleDeleteReservation = (id: string, clientName: string) => {
+    setDeleteConfirm({
+      isOpen: true,
+      title: "Supprimer la pré-réservation",
+      message: `Êtes-vous sûr de vouloir supprimer la réservation de ${clientName} ?`,
+      onConfirm: async () => {
+        await fetch(`/api/prereservations/${id}`, { method: 'DELETE', headers: fetchHeaders });
+        loadAllData();
+        setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Pré-réservation supprimée.' });
+      }
+    });
   };
 
   const handleUpdateDevisStatus = async (id: string, status: string) => {
@@ -320,54 +632,129 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       <div className="flex-1 flex flex-col md:flex-row">
         
         {/* Navigation Sidebar / Horizontal Bar on Mobile */}
-        <aside className="w-full md:w-64 bg-[#0d0d2e] border-b md:border-b-0 md:border-r border-white/10 p-3 md:p-4 space-y-1 overflow-x-auto md:overflow-x-visible scrollbar-none shrink-0">
-          <div className="hidden md:block text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 py-2">
-            Gestion du Site & Métier
+        <aside className="w-full md:w-64 bg-[#0d0d2e] border-b md:border-b-0 md:border-r border-white/10 p-3 md:p-4 space-y-4 overflow-x-auto md:overflow-x-visible scrollbar-none shrink-0">
+          
+          {/* GROUP 1 */}
+          <div className="space-y-1">
+            <div className="hidden md:block text-[10px] font-extrabold uppercase tracking-wider text-[#00C2C2] px-3 py-1">
+              Pilotage & Demandes
+            </div>
+            <div className="flex md:flex-col gap-1 min-w-max md:min-w-0">
+              {[
+                { id: 'overview', label: "Vue d'ensemble", icon: LayoutDashboard },
+                { id: 'devis', label: 'Demandes de Devis', icon: FileText, count: devis.length, badge: stats?.pendingQuotes ? `${stats.pendingQuotes} att.` : null },
+                { id: 'reservations', label: 'Pré-réservations', icon: CalendarCheck, count: reservations.length, badge: stats?.pendingReservations ? `${stats.pendingReservations} att.` : null },
+                { id: 'comments', label: 'Commentaires Blog', icon: MessageSquare, count: comments.length, badge: stats?.pendingComments ? `${stats.pendingComments} mod.` : null },
+              ].map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-[#6C68F4] text-white shadow-md shadow-[#6C68F4]/30 font-bold'
+                        : 'text-slate-300 bg-white/5 md:bg-transparent hover:bg-white/10 active:bg-white/15'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Icon className="w-4 h-4 opacity-90 shrink-0" />
+                      <span>{tab.label}</span>
+                    </div>
+
+                    {tab.badge ? (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#FFAD5B] text-slate-950 ml-1">
+                        {tab.badge}
+                      </span>
+                    ) : tab.count !== undefined ? (
+                      <span className="text-[10px] text-slate-400 font-normal ml-1 bg-white/10 px-1.5 py-0.5 rounded-md">
+                        {tab.count}
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          <div className="flex md:flex-col gap-1.5 md:gap-1 min-w-max md:min-w-0">
-            {[
-              { id: 'overview', label: "Vue d'ensemble", icon: LayoutDashboard, badge: stats?.pendingQuotes ? `${stats.pendingQuotes} devis` : null },
-              { id: 'siteContent', label: 'Textes du Site', icon: FileText },
-              { id: 'services', label: 'Services', icon: Briefcase, count: services.length },
-              { id: 'articles', label: 'Blog & Articles', icon: BookOpen, count: articles.length },
-              { id: 'products', label: 'Catalogue Matériel', icon: Package, count: products.length },
-              { id: 'packs', label: 'Packs & Bundles', icon: Boxes, count: packs.length },
-              { id: 'comments', label: 'Commentaires', icon: MessageSquare, badge: stats?.pendingComments ? `${stats.pendingComments} mod.` : null },
-              { id: 'devis', label: 'Demandes de Devis', icon: FileText, count: devis.length },
-              { id: 'reservations', label: 'Pré-réservations', icon: CalendarCheck, badge: stats?.pendingReservations ? `${stats.pendingReservations} rés.` : null }
-            ].map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                    isActive
-                      ? 'bg-[#6C68F4] text-white shadow-md shadow-[#6C68F4]/30'
-                      : 'text-slate-300 bg-white/5 md:bg-transparent hover:bg-white/10 active:bg-white/15'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <Icon className="w-4 h-4 opacity-80 shrink-0" />
-                    <span>{tab.label}</span>
-                  </div>
-
-                  {tab.badge && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#FFAD5B] text-slate-950 ml-1">
-                      {tab.badge}
-                    </span>
-                  )}
-                  {tab.count !== undefined && !tab.badge && (
-                    <span className="text-[11px] text-slate-400 font-normal ml-1">
-                      {tab.count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+          {/* GROUP 2 */}
+          <div className="space-y-1 pt-2 md:border-t border-white/10">
+            <div className="hidden md:block text-[10px] font-extrabold uppercase tracking-wider text-[#00C2C2] px-3 py-1">
+              Offres & Catalogues
+            </div>
+            <div className="flex md:flex-col gap-1 min-w-max md:min-w-0">
+              {[
+                { id: 'services', label: 'Offres Marketing', icon: Briefcase, count: services.length },
+                { id: 'packs', label: 'Packs Clé en Main', icon: Boxes, count: packs.length },
+                { id: 'products', label: 'Catalogue Matériel', icon: Package, count: products.length },
+                { id: 'articles', label: 'Blog & Articles', icon: BookOpen, count: articles.length },
+              ].map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-[#6C68F4] text-white shadow-md shadow-[#6C68F4]/30 font-bold'
+                        : 'text-slate-300 bg-white/5 md:bg-transparent hover:bg-white/10 active:bg-white/15'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Icon className="w-4 h-4 opacity-90 shrink-0" />
+                      <span>{tab.label}</span>
+                    </div>
+                    {tab.count !== undefined && (
+                      <span className="text-[10px] text-slate-400 font-normal ml-1 bg-white/10 px-1.5 py-0.5 rounded-md">
+                        {tab.count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
+
+          {/* GROUP 3 */}
+          <div className="space-y-1 pt-2 md:border-t border-white/10">
+            <div className="hidden md:block text-[10px] font-extrabold uppercase tracking-wider text-[#00C2C2] px-3 py-1">
+              Apparence & Paramètres
+            </div>
+            <div className="flex md:flex-col gap-1 min-w-max md:min-w-0">
+              {[
+                { id: 'siteContent', label: 'Textes & Visuels Site', icon: Edit3 },
+                { id: 'partners', label: 'Bandeau Partenaires', icon: Handshake, count: siteContent?.partners?.length },
+                { id: 'settings', label: 'Paramètres Back-Office', icon: ShieldCheck },
+              ].map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-[#6C68F4] text-white shadow-md shadow-[#6C68F4]/30 font-bold'
+                        : 'text-slate-300 bg-white/5 md:bg-transparent hover:bg-white/10 active:bg-white/15'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Icon className="w-4 h-4 opacity-90 shrink-0" />
+                      <span>{tab.label}</span>
+                    </div>
+                    {tab.count !== undefined && (
+                      <span className="text-[10px] text-slate-400 font-normal ml-1 bg-white/10 px-1.5 py-0.5 rounded-md">
+                        {tab.count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
         </aside>
 
         {/* Content View Area */}
@@ -534,6 +921,467 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                 </div>
 
+                {/* Hero Carousel Customization Section */}
+                <div className="pt-6 border-t border-white/10 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-bold text-white">Images du Carrousel d'accueil</h3>
+                      <p className="text-xs text-slate-400">Gérez les images de la zone de défilement visuel de la page d'accueil.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const currentSlides = siteContent.heroSlides || [];
+                        const newSlide = {
+                          id: `slide-${Date.now()}`,
+                          title: '',
+                          subtitle: '',
+                          image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1800&q=85',
+                          buttonText: '',
+                          tab: ''
+                        };
+                        setSiteContent({ ...siteContent, heroSlides: [...currentSlides, newSlide] });
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-[#00C2C2] text-slate-950 font-bold text-xs hover:bg-[#00a3a3] cursor-pointer flex items-center gap-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Ajouter une image</span>
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {(siteContent.heroSlides || []).map((slide, index) => (
+                      <div key={slide.id || index} className="p-4 rounded-2xl bg-black/30 border border-white/10 space-y-3 relative group">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-[#00C2C2]">Image #{index + 1}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const currentSlides = siteContent.heroSlides || [];
+                              const updated = currentSlides.filter((_, i) => i !== index);
+                              setSiteContent({ ...siteContent, heroSlides: updated });
+                            }}
+                            className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 cursor-pointer"
+                            title="Supprimer cette image"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="space-y-3">
+                          <ImageUploader
+                            label="Image de fond (Téléverser depuis l'appareil ou URL)"
+                            value={slide.image}
+                            onChange={(url) => {
+                              const currentSlides = [...(siteContent.heroSlides || [])];
+                              currentSlides[index] = { ...slide, image: url };
+                              setSiteContent({ ...siteContent, heroSlides: currentSlides });
+                            }}
+                            adminToken={adminToken}
+                          />
+                        </div>
+
+                        {slide.image && (
+                          <div className="h-32 w-full rounded-xl overflow-hidden border border-white/10 mt-2">
+                            <img src={slide.image} alt="Slide preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Service Categories Grid Management Section */}
+                <div className="pt-6 border-t border-white/10 space-y-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Cartes de Services (Page d'Accueil)</h3>
+                    <p className="text-xs text-slate-400">Modifiez les images (Zone 2/3 du haut) et les textes (Zone 1/3 du bas) des 3 cartes de présentation des services, ainsi que leur statut de disponibilité.</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    {((siteContent.serviceCategories && siteContent.serviceCategories.length > 0)
+                      ? siteContent.serviceCategories
+                      : initialServiceCategories
+                    ).map((cat, index) => (
+                      <div key={cat.id || index} className="p-4 rounded-2xl bg-black/30 border border-white/10 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-[#00C2C2]">Carte #{index + 1} : {cat.title}</span>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={cat.available}
+                              onChange={(e) => {
+                                const currentCats = siteContent.serviceCategories && siteContent.serviceCategories.length > 0
+                                  ? [...siteContent.serviceCategories]
+                                  : [...initialServiceCategories];
+                                currentCats[index] = { ...cat, available: e.target.checked };
+                                setSiteContent({ ...siteContent, serviceCategories: currentCats });
+                              }}
+                              className="rounded bg-white/10 border-white/20 text-[#6C68F4] focus:ring-0"
+                            />
+                            <span className="text-xs font-medium text-slate-300">Disponible / Actif</span>
+                          </label>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-300 mb-1">Titre de la Carte</label>
+                            <input
+                              type="text"
+                              value={cat.title}
+                              onChange={(e) => {
+                                const currentCats = siteContent.serviceCategories && siteContent.serviceCategories.length > 0
+                                  ? [...siteContent.serviceCategories]
+                                  : [...initialServiceCategories];
+                                currentCats[index] = { ...cat, title: e.target.value };
+                                setSiteContent({ ...siteContent, serviceCategories: currentCats });
+                              }}
+                              className="w-full px-3 py-1.5 rounded-xl bg-white/5 border border-white/15 text-xs text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-300 mb-1">Description courte (Bas de la carte)</label>
+                            <input
+                              type="text"
+                              value={cat.description}
+                              onChange={(e) => {
+                                const currentCats = siteContent.serviceCategories && siteContent.serviceCategories.length > 0
+                                  ? [...siteContent.serviceCategories]
+                                  : [...initialServiceCategories];
+                                currentCats[index] = { ...cat, description: e.target.value };
+                                setSiteContent({ ...siteContent, serviceCategories: currentCats });
+                              }}
+                              className="w-full px-3 py-1.5 rounded-xl bg-white/5 border border-white/15 text-xs text-white"
+                            />
+                          </div>
+                        </div>
+
+                        <ImageUploader
+                          label="Image de la Carte (Haut de la carte 2/3)"
+                          value={cat.image}
+                          onChange={(url) => {
+                            const currentCats = siteContent.serviceCategories && siteContent.serviceCategories.length > 0
+                              ? [...siteContent.serviceCategories]
+                              : [...initialServiceCategories];
+                            currentCats[index] = { ...cat, image: url };
+                            setSiteContent({ ...siteContent, serviceCategories: currentCats });
+                          }}
+                          adminToken={adminToken}
+                        />
+
+                        {cat.image && (
+                          <div className="h-28 w-full rounded-xl overflow-hidden border border-white/10 mt-2">
+                            <img src={cat.image} alt={cat.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Testimonials Management Section */}
+                <div className="pt-6 border-t border-white/10 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                        <Star className="w-5 h-5 text-[#FFAD5B]" />
+                        <span>Section Témoignages & Avis Clients</span>
+                      </h3>
+                      <p className="text-xs text-slate-400">Modifiez le titre, le sous-titre et les avis clients affichés sur le site.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const currentTestis = siteContent.testimonials || initialTestimonials;
+                        const newTesti: TestimonialItem = {
+                          id: `testi-${Date.now()}`,
+                          clientName: 'Nouveau Client',
+                          clientRole: 'Responsable',
+                          company: 'Entreprise',
+                          comment: 'Excellent service et accompagnement professionnel de l’équipe Forward One.',
+                          rating: 5,
+                          avatar: '',
+                          date: new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+                        };
+                        setSiteContent({ ...siteContent, testimonials: [...currentTestis, newTesti] });
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-[#00C2C2] text-slate-950 font-bold text-xs hover:bg-[#00a3a3] cursor-pointer flex items-center gap-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Ajouter un témoignage</span>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">Titre de la section Témoignages</label>
+                      <input
+                        type="text"
+                        value={siteContent.testimonialsTitle || "Ce Que Disent Nos Clients"}
+                        onChange={(e) => setSiteContent({ ...siteContent, testimonialsTitle: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-xs text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">Sous-titre de la section Témoignages</label>
+                      <input
+                        type="text"
+                        value={siteContent.testimonialsSubtitle || "La satisfaction de nos partenaires est la preuve irréfutable de notre quête d’excellence."}
+                        onChange={(e) => setSiteContent({ ...siteContent, testimonialsSubtitle: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-xs text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 pt-2">
+                    {((siteContent.testimonials && siteContent.testimonials.length > 0)
+                      ? siteContent.testimonials
+                      : initialTestimonials
+                    ).map((testi, index) => (
+                      <div key={testi.id || index} className="p-4 rounded-2xl bg-black/30 border border-white/10 space-y-3 relative">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-[#FFAD5B]">Témoignage #{index + 1} : {testi.clientName}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const currentTestis = siteContent.testimonials || initialTestimonials;
+                              const updated = currentTestis.filter((_, i) => i !== index);
+                              setSiteContent({ ...siteContent, testimonials: updated });
+                            }}
+                            className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 cursor-pointer"
+                            title="Supprimer ce témoignage"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-300 mb-1">Nom du Client</label>
+                            <input
+                              type="text"
+                              value={testi.clientName}
+                              onChange={(e) => {
+                                const currentTestis = [...(siteContent.testimonials || initialTestimonials)];
+                                currentTestis[index] = { ...testi, clientName: e.target.value };
+                                setSiteContent({ ...siteContent, testimonials: currentTestis });
+                              }}
+                              className="w-full px-3 py-1.5 rounded-xl bg-white/5 border border-white/15 text-xs text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-300 mb-1">Rôle / Poste</label>
+                            <input
+                              type="text"
+                              value={testi.clientRole}
+                              onChange={(e) => {
+                                const currentTestis = [...(siteContent.testimonials || initialTestimonials)];
+                                currentTestis[index] = { ...testi, clientRole: e.target.value };
+                                setSiteContent({ ...siteContent, testimonials: currentTestis });
+                              }}
+                              className="w-full px-3 py-1.5 rounded-xl bg-white/5 border border-white/15 text-xs text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-300 mb-1">Entreprise</label>
+                            <input
+                              type="text"
+                              value={testi.company}
+                              onChange={(e) => {
+                                const currentTestis = [...(siteContent.testimonials || initialTestimonials)];
+                                currentTestis[index] = { ...testi, company: e.target.value };
+                                setSiteContent({ ...siteContent, testimonials: currentTestis });
+                              }}
+                              className="w-full px-3 py-1.5 rounded-xl bg-white/5 border border-white/15 text-xs text-white"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-300 mb-1">Avis / Commentaire</label>
+                          <textarea
+                            rows={2}
+                            value={testi.comment}
+                            onChange={(e) => {
+                              const currentTestis = [...(siteContent.testimonials || initialTestimonials)];
+                              currentTestis[index] = { ...testi, comment: e.target.value };
+                              setSiteContent({ ...siteContent, testimonials: currentTestis });
+                            }}
+                            className="w-full px-3 py-1.5 rounded-xl bg-white/5 border border-white/15 text-xs text-white"
+                          />
+                        </div>
+
+                        <ImageUploader
+                          label="Avatar ou Photo de profil (Optionnel)"
+                          value={testi.avatar || ''}
+                          onChange={(url) => {
+                            const currentTestis = [...(siteContent.testimonials || initialTestimonials)];
+                            currentTestis[index] = { ...testi, avatar: url };
+                            setSiteContent({ ...siteContent, testimonials: currentTestis });
+                          }}
+                          adminToken={adminToken}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Video Cards Section Management */}
+                <div className="pt-6 border-t border-white/10 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                        <Video className="w-5 h-5 text-[#00C2C2]" />
+                        <span>Section Cartes Vidéos (Directement après les Témoignages)</span>
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        Modifiez les 3 cartes vidéos rectangulaires à l'horizontale. Vous pouvez changer l'intitulé (titre sur la carte), la vidéo (YouTube ou fichier MP4) et l'image de couverture.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const currentVids = siteContent.videoCards || initialVideoCards;
+                        const newVid: VideoCardItem = {
+                          id: `video-${Date.now()}`,
+                          title: 'Nouvelle Vidéo Réalisation',
+                          subtitle: 'Description rapide de la prestation ou de la réalisation.',
+                          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+                          thumbnailImage: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=1200&q=80',
+                          badge: 'FORWARD ONE'
+                        };
+                        setSiteContent({ ...siteContent, videoCards: [...currentVids, newVid] });
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-[#6C68F4] text-white font-bold text-xs hover:bg-[#5b57e0] cursor-pointer flex items-center gap-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Ajouter une carte vidéo</span>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">Titre de la section Vidéos</label>
+                      <input
+                        type="text"
+                        value={siteContent.videoSectionTitle || "Forward One en Action"}
+                        onChange={(e) => setSiteContent({ ...siteContent, videoSectionTitle: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-xs text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">Sous-titre de la section Vidéos</label>
+                      <input
+                        type="text"
+                        value={siteContent.videoSectionSubtitle || "Découvrez nos réalisations en vidéos : régies événements, tournages, shows lumière et créations web."}
+                        onChange={(e) => setSiteContent({ ...siteContent, videoSectionSubtitle: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-xs text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 pt-2">
+                    {((siteContent.videoCards && siteContent.videoCards.length > 0)
+                      ? siteContent.videoCards
+                      : initialVideoCards
+                    ).map((video, index) => (
+                      <div key={video.id || index} className="p-4 rounded-2xl bg-black/30 border border-white/10 space-y-3 relative">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-[#00C2C2]">Carte Vidéo #{index + 1} : {video.title}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const currentVids = siteContent.videoCards || initialVideoCards;
+                              const updated = currentVids.filter((_, i) => i !== index);
+                              setSiteContent({ ...siteContent, videoCards: updated });
+                            }}
+                            className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 cursor-pointer"
+                            title="Supprimer cette carte vidéo"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-300 mb-1">Intitulé / Titre (Affiché DESSUS la carte)</label>
+                            <input
+                              type="text"
+                              value={video.title}
+                              onChange={(e) => {
+                                const currentVids = [...(siteContent.videoCards || initialVideoCards)];
+                                currentVids[index] = { ...video, title: e.target.value };
+                                setSiteContent({ ...siteContent, videoCards: currentVids });
+                              }}
+                              className="w-full px-3 py-1.5 rounded-xl bg-white/5 border border-white/15 text-xs text-white font-bold"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-300 mb-1">Badge Catégorie (Haut de carte)</label>
+                            <input
+                              type="text"
+                              value={video.badge || ''}
+                              onChange={(e) => {
+                                const currentVids = [...(siteContent.videoCards || initialVideoCards)];
+                                currentVids[index] = { ...video, badge: e.target.value };
+                                setSiteContent({ ...siteContent, videoCards: currentVids });
+                              }}
+                              placeholder="Ex: LOGISTIQUE ÉVÉNEMENTIELLE"
+                              className="w-full px-3 py-1.5 rounded-xl bg-white/5 border border-white/15 text-xs text-white"
+                            />
+                          </div>
+                        </div>
+
+                        <VideoUploader
+                          label="Vidéo à afficher (Fichier MP4/WebM uploaddé ou Lien YouTube)"
+                          value={video.videoUrl}
+                          onChange={(url) => {
+                            const currentVids = [...(siteContent.videoCards || initialVideoCards)];
+                            currentVids[index] = { ...video, videoUrl: url };
+                            setSiteContent({ ...siteContent, videoCards: currentVids });
+                          }}
+                          adminToken={adminToken}
+                        />
+
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-300 mb-1">Sous-titre / Description Courte</label>
+                          <input
+                            type="text"
+                            value={video.subtitle || ''}
+                            onChange={(e) => {
+                              const currentVids = [...(siteContent.videoCards || initialVideoCards)];
+                              currentVids[index] = { ...video, subtitle: e.target.value };
+                              setSiteContent({ ...siteContent, videoCards: currentVids });
+                            }}
+                            className="w-full px-3 py-1.5 rounded-xl bg-white/5 border border-white/15 text-xs text-white"
+                          />
+                        </div>
+
+                        <ImageUploader
+                          label="Image de Couverture de la Carte Vidéo (Thumbnail)"
+                          value={video.thumbnailImage || ''}
+                          onChange={(url) => {
+                            const currentVids = [...(siteContent.videoCards || initialVideoCards)];
+                            currentVids[index] = { ...video, thumbnailImage: url };
+                            setSiteContent({ ...siteContent, videoCards: currentVids });
+                          }}
+                          adminToken={adminToken}
+                        />
+
+                        {video.thumbnailImage && (
+                          <div className="h-28 w-full rounded-xl overflow-hidden border border-white/10 mt-2 relative">
+                            <img src={video.thumbnailImage} alt={video.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                              <Play className="w-8 h-8 text-white fill-white" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="pt-4 flex justify-end">
                   <button
                     type="submit"
@@ -546,40 +1394,247 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </form>
           )}
 
-          {/* TAB 3: SERVICES */}
-          {activeTab === 'services' && (
-            <div className="space-y-6 animate-fade-in">
-              <div className="flex items-center justify-between">
+          {/* TAB: BANDEAU PARTENAIRES */}
+          {activeTab === 'partners' && siteContent && (
+            <div className="space-y-6 animate-fade-in min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-white">Gestion des Services</h2>
-                  <p className="text-xs text-slate-400 mt-1">Gérez vos prestations Marketing Digital et Logistique Événementielle.</p>
+                  <div className="flex items-center gap-2">
+                    <Handshake className="w-6 h-6 text-[#00C2C2]" />
+                    <h2 className="text-xl sm:text-2xl font-bold text-white">Gestion de la Bande Défilante des Partenaires</h2>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Ajoutez et personnalisez les logos des entreprises, marques et sponsors affichés en défilement continu sur le site public.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleResetDefaultPartners}
+                    className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-slate-300 font-semibold text-xs flex items-center gap-1.5 cursor-pointer"
+                    title="Réinitialiser avec les 8 partenaires par défaut"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Réinitialiser</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleOpenNewPartner}
+                    className="px-4 py-2.5 rounded-xl bg-[#00C2C2] hover:bg-[#00a3a3] text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Ajouter un Partenaire</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Banner Configuration Card */}
+              <div className="p-5 rounded-2xl bg-[#141446] border border-white/10 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+                  <div className="space-y-1">
+                    <div className="text-xs font-bold text-[#FFAD5B] uppercase tracking-wider">Configuration Globale du Bandeau</div>
+                    <div className="text-xs text-slate-300">Activer ou masquer le bandeau défilant sur la page d'accueil du site.</div>
+                  </div>
+
+                  <label className="flex items-center gap-3 cursor-pointer shrink-0 bg-white/5 px-4 py-2 rounded-xl border border-white/10">
+                    <input
+                      type="checkbox"
+                      checked={siteContent.partnersBannerEnabled !== false}
+                      onChange={(e) => {
+                        const updated = { ...siteContent, partnersBannerEnabled: e.target.checked };
+                        setSiteContent(updated);
+                        fetch('/api/site-content', {
+                          method: 'PUT',
+                          headers: fetchHeaders,
+                          body: JSON.stringify(updated)
+                        });
+                        if (onRefreshPublicData) onRefreshPublicData();
+                      }}
+                      className="w-4 h-4 rounded bg-white/10 border-white/20 text-[#6C68F4] focus:ring-0 cursor-pointer"
+                    />
+                    <span className="text-xs font-bold text-white">Bandeau Actif sur le Site</span>
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">Titre de la Rubrique (ex: "Nos Partenaires & Marques de Confiance")</label>
+                    <input
+                      type="text"
+                      value={siteContent.partnersBannerTitle || ''}
+                      onChange={(e) => setSiteContent({ ...siteContent, partnersBannerTitle: e.target.value })}
+                      placeholder="Nos Partenaires & Marques de Confiance"
+                      className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#6C68F4]"
+                    />
+                  </div>
+
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleSaveSiteContent}
+                      className="px-5 py-2 rounded-xl bg-[#6C68F4] hover:bg-[#5b57e0] font-bold text-xs text-white cursor-pointer shadow-md"
+                    >
+                      Sauvegarder le Titre du Bandeau
+                    </button>
+                  </div>
+                </div>
+
+                {/* Live Preview Box */}
+                <div className="pt-3">
+                  <div className="text-[11px] font-bold text-[#00C2C2] uppercase mb-2">Aperçu en Direct du Bandeau :</div>
+                  <div className="rounded-xl overflow-hidden border border-white/15">
+                    <PartnersBanner siteContent={siteContent} theme="dark" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Partners Logos Grid */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                    Logos des Partenaires ({ (siteContent.partners || []).length })
+                  </h3>
+                  <span className="text-xs text-slate-400">
+                    { (siteContent.partners || []).filter(p => p.visible !== false).length } actifs
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {(siteContent.partners || []).map((partner) => (
+                    <div
+                      key={partner.id}
+                      className={`p-4 rounded-xl border transition-all flex flex-col justify-between gap-3 ${
+                        partner.visible !== false
+                          ? 'bg-[#141446] border-white/10 hover:border-[#6C68F4]/50'
+                          : 'bg-black/40 border-white/5 opacity-60'
+                      }`}
+                    >
+                      <div className="space-y-2">
+                        {/* Header Badge & Controls */}
+                        <div className="flex items-center justify-between text-[10px] font-bold gap-2">
+                          <span className="px-2 py-0.5 rounded bg-[#00C2C2]/20 text-[#00C2C2] uppercase truncate">
+                            {partner.category || 'Partenaire'}
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePartnerVisibility(partner)}
+                            className={`p-1 rounded cursor-pointer transition-colors ${
+                              partner.visible !== false ? 'text-emerald-400 hover:bg-emerald-500/20' : 'text-slate-500 hover:bg-white/10'
+                            }`}
+                            title={partner.visible !== false ? 'Partenaire visible (Cliquer pour masquer)' : 'Partenaire masqué (Cliquer pour afficher)'}
+                          >
+                            {partner.visible !== false ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+
+                        {/* Logo Image Preview */}
+                        <div className="h-20 w-full rounded-lg bg-white/5 border border-white/10 p-2 flex items-center justify-center overflow-hidden">
+                          {partner.logo ? (
+                            <img
+                              src={partner.logo}
+                              alt={partner.name}
+                              className="max-h-full max-w-full object-contain"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div className="text-xs text-slate-500 italic">Aucun logo</div>
+                          )}
+                        </div>
+
+                        {/* Name & Link */}
+                        <div>
+                          <div className="font-bold text-white text-sm truncate">{partner.name}</div>
+                          {partner.website && (
+                            <a
+                              href={partner.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[11px] text-[#6C68F4] hover:underline flex items-center gap-1 truncate mt-0.5"
+                            >
+                              <ExternalLink className="w-3 h-3 shrink-0" />
+                              <span className="truncate">{partner.website}</span>
+                            </a>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Footer Actions */}
+                      <div className="pt-2 border-t border-white/10 flex items-center justify-between">
+                        <span className={`text-[10px] font-semibold ${partner.visible !== false ? 'text-emerald-400' : 'text-slate-500'}`}>
+                          {partner.visible !== false ? '• Affiché' : '• Masqué'}
+                        </span>
+
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditPartner(partner)}
+                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white cursor-pointer"
+                            title="Modifier"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePartner(partner.id, partner.name)}
+                            className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 cursor-pointer"
+                            title="Supprimer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: SERVICES & OFFRES */}
+          {activeTab === 'services' && (
+            <div className="space-y-6 animate-fade-in min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-bold text-white">Gestion des Offres & Services</h2>
+                  <p className="text-xs text-slate-400 mt-1">Concevez, modifiez et gérez vos offres Marketing Digital et Logistique.</p>
                 </div>
                 <button
-                  onClick={() => setEditingService({ title: '', category: 'Marketing Digital', shortDescription: '', fullDescription: '', iconName: 'Sparkles', features: [], image: '' })}
-                  className="px-4 py-2 rounded-xl bg-[#6C68F4] text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+                  onClick={handleOpenNewService}
+                  className="px-4 py-2.5 rounded-xl bg-[#6C68F4] text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shrink-0 self-start sm:self-auto"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Nouveau Service</span>
+                  <span>Nouvelle Offre / Service</span>
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
                 {services.map((serv) => (
-                  <div key={serv.id} className="p-4 rounded-xl bg-[#141446] border border-white/10 space-y-3 flex flex-col justify-between overflow-hidden">
-                    {serv.image && (
-                      <div className="h-32 -mx-4 -mt-4 mb-1 overflow-hidden relative">
-                        <img src={serv.image} alt={serv.title} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#141446] via-transparent to-transparent" />
-                      </div>
-                    )}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-[#6C68F4]/20 text-[#00C2C2]">
-                          {serv.category}
-                        </span>
+                  <div key={serv.id} className="p-4 sm:p-5 rounded-xl bg-[#141446] border border-white/10 space-y-3 overflow-hidden min-w-0 flex flex-col justify-between">
+                    <div>
+                      {serv.image && (
+                        <div className="h-36 -mx-4 sm:-mx-5 -mt-4 sm:-mt-5 mb-3 overflow-hidden relative">
+                          <img src={serv.image} alt={serv.title} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-[#141446] via-transparent to-transparent" />
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-[#00C2C2]/20 text-[#00C2C2] truncate">
+                            {serv.badge || serv.category}
+                          </span>
+                          {serv.popular && (
+                            <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-[#5362DC]/30 text-[#6C68F4]">
+                              ★ Recommandé
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => setEditingService(serv)}
+                            onClick={() => handleOpenEditService(serv)}
                             className="p-1 text-slate-300 hover:text-white cursor-pointer"
                           >
                             <Edit3 className="w-4 h-4" />
@@ -593,8 +1648,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                       </div>
 
-                      <h4 className="font-bold text-white text-base">{serv.title}</h4>
-                      <p className="text-xs text-slate-300 line-clamp-2">{serv.shortDescription}</p>
+                      <h4 className="font-bold text-white text-base mt-2">{serv.title}</h4>
+                      {serv.tagline && <p className="text-xs text-[#6C68F4] font-semibold">{serv.tagline}</p>}
+                      <p className="text-xs text-[#FFAD5B] font-semibold mt-1">{serv.priceEstimate || "Sur devis"}</p>
+                      <p className="text-xs text-slate-300 leading-relaxed mt-2 line-clamp-2">{serv.shortDescription}</p>
+
+                      {serv.features && serv.features.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-white/10 space-y-1">
+                          <div className="text-[11px] font-bold text-slate-400 uppercase">Prestations incluses ({serv.features.length}) :</div>
+                          <div className="text-xs text-slate-300 space-y-0.5">
+                            {serv.features.slice(0, 3).map((f, idx) => (
+                              <div key={idx} className="flex items-center gap-1.5 truncate">
+                                <span className="text-[#00C2C2]">✓</span>
+                                <span className="truncate">{f}</span>
+                              </div>
+                            ))}
+                            {serv.features.length > 3 && (
+                              <div className="text-[10px] text-slate-400 italic">+ {serv.features.length - 3} autres prestations...</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -674,7 +1748,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <p className="text-xs text-slate-400 mt-1">Ajoutez, ajustez les prix journaliers et états de disponibilité.</p>
                 </div>
                 <button
-                  onClick={() => setEditingProduct({ name: '', category: 'Sonorisation', dailyRate: 50000, stockQuantity: 5, availabilityStatus: 'disponible', specifications: {}, isFeatured: false, image: '' })}
+                  onClick={handleOpenNewProduct}
                   className="px-4 py-2.5 rounded-xl bg-[#00C2C2] text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shrink-0 self-start sm:self-auto"
                 >
                   <Plus className="w-4 h-4" />
@@ -710,7 +1784,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                       <div className="flex items-center gap-2 shrink-0">
                         <button
-                          onClick={() => setEditingProduct(prod)}
+                          onClick={() => handleOpenEditProduct(prod)}
                           className="p-1 text-slate-300 hover:text-white cursor-pointer"
                         >
                           <Edit3 className="w-4 h-4" />
@@ -738,7 +1812,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <p className="text-xs text-slate-400 mt-1">Créez des offres groupées clé en main.</p>
                 </div>
                 <button
-                  onClick={() => setEditingPack({ title: '', module: 'marketing', tagline: '', priceEstimate: 'À partir de 1 500 000 FCFA', badge: 'Sur-mesure', description: '', inclusions: [], popular: false, image: '' })}
+                  onClick={handleOpenNewPack}
                   className="px-4 py-2.5 rounded-xl bg-[#6C68F4] text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shrink-0 self-start sm:self-auto"
                 >
                   <Plus className="w-4 h-4" />
@@ -761,7 +1835,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </span>
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => setEditingPack(pack)}
+                          onClick={() => handleOpenEditPack(pack)}
                           className="p-1 text-slate-300 hover:text-white cursor-pointer"
                         >
                           <Edit3 className="w-4 h-4" />
@@ -854,11 +1928,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <p className="text-xs text-slate-400 mt-1">Consultez et qualifiez les projets soumis par vos futurs clients.</p>
               </div>
 
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Rechercher par nom, société ou email..."
+                  value={devisSearch}
+                  onChange={(e) => setDevisSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 rounded-xl bg-[#141446] border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#6C68F4]"
+                />
+              </div>
+
               <div className="space-y-4">
-                {devis.length === 0 ? (
-                  <p className="text-xs text-slate-400 italic">Aucune demande de devis enregistrée.</p>
+                {devis.filter(d => 
+                  d.clientName.toLowerCase().includes(devisSearch.toLowerCase()) ||
+                  d.company?.toLowerCase().includes(devisSearch.toLowerCase()) ||
+                  d.email.toLowerCase().includes(devisSearch.toLowerCase())
+                ).length === 0 ? (
+                  <p className="text-xs text-slate-400 italic">Aucune demande de devis correspondante.</p>
                 ) : (
-                  devis.map((d) => (
+                  devis.filter(d => 
+                    d.clientName.toLowerCase().includes(devisSearch.toLowerCase()) ||
+                    d.company?.toLowerCase().includes(devisSearch.toLowerCase()) ||
+                    d.email.toLowerCase().includes(devisSearch.toLowerCase())
+                  ).map((d) => (
                     <div key={d.id} className="p-4 sm:p-5 rounded-xl bg-[#141446] border border-white/10 space-y-3 min-w-0">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3 min-w-0">
                         <div className="min-w-0">
@@ -868,6 +1962,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
 
                         <div className="flex flex-wrap items-center gap-3 shrink-0">
+                          <a
+                            href={`https://wa.me/${d.phone.replace(/[^0-9]/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer"
+                            title="Contacter sur WhatsApp"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                          </a>
                           <span className="text-xs font-bold text-[#FFAD5B]">Budget : {d.budgetRange}</span>
                           <select
                             value={d.status}
@@ -879,6 +1982,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <option value="traitee" className="bg-[#141446]">Devis envoyé</option>
                             <option value="archivee" className="bg-[#141446]">Archivée</option>
                           </select>
+                          <button
+                            onClick={() => handleDeleteDevis(d.id, d.clientName)}
+                            className="p-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 cursor-pointer"
+                            title="Supprimer la demande de devis"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
 
@@ -948,18 +2058,39 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-white/5 text-xs min-w-0">
                         <span className="text-slate-400 text-[11px] break-words">Contact : {res.email} | {res.phone}</span>
 
-                        <button
-                          onClick={() => setViewingReservationEmail(res)}
-                          className="px-3 py-1 rounded bg-[#6C68F4]/20 hover:bg-[#6C68F4]/30 text-[#00C2C2] font-semibold text-xs flex items-center gap-1 cursor-pointer"
-                        >
-                          <Mail className="w-3.5 h-3.5" />
-                          <span>Voir les Emails Générés</span>
-                        </button>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            onClick={() => handleDeleteReservation(res.id, res.clientName)}
+                            className="px-3 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-semibold text-xs flex items-center gap-1 cursor-pointer"
+                            title="Supprimer la réservation"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Supprimer</span>
+                          </button>
+                          <button
+                            onClick={() => setViewingReservationEmail(res)}
+                            className="px-3 py-1 rounded bg-[#6C68F4]/20 hover:bg-[#6C68F4]/30 text-[#00C2C2] font-semibold text-xs flex items-center gap-1 cursor-pointer"
+                          >
+                            <Mail className="w-3.5 h-3.5" />
+                            <span>Voir les Emails Générés</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))
                 )}
               </div>
+            </div>
+          )}
+
+          {/* TAB 10: PARAMÈTRES */}
+          {activeTab === 'settings' && (
+            <div className="space-y-6 animate-fade-in min-w-0">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-white">Paramètres Administrateur</h2>
+                <p className="text-xs text-slate-400 mt-1">Gérez la sécurité de votre accès Back-Office.</p>
+              </div>
+              <AdminPasswordForm adminToken={adminToken} />
             </div>
           )}
 
@@ -972,27 +2103,78 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {editingService && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <form onSubmit={handleSaveService} className="w-full max-w-xl p-6 rounded-2xl bg-[#141446] border border-[#6C68F4] space-y-4 text-white max-h-[90vh] overflow-y-auto">
-            <h3 className="font-bold text-lg">{editingService.id ? 'Éditer Service' : 'Nouveau Service'}</h3>
-            <div>
-              <label className="block text-xs mb-1">Titre</label>
-              <input
-                type="text"
-                required
-                value={editingService.title || ''}
-                onChange={(e) => setEditingService({ ...editingService, title: e.target.value })}
-                className="w-full p-2 rounded bg-white/5 border border-white/15 text-xs"
-              />
+            <h3 className="font-bold text-lg">{editingService.id ? 'Éditer Offre / Service' : 'Nouvelle Offre / Service'}</h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs mb-1">Titre de l'Offre / Service</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="ex: Stratégie de Marque & Branding"
+                  value={editingService.title || ''}
+                  onChange={(e) => setEditingService({ ...editingService, title: e.target.value })}
+                  className="w-full p-2 rounded bg-white/5 border border-white/15 text-xs"
+                />
+              </div>
+              <div>
+                <label className="block text-xs mb-1">Pôle / Catégorie</label>
+                <select
+                  value={editingService.category || 'Marketing Digital'}
+                  onChange={(e) => setEditingService({ ...editingService, category: e.target.value as any })}
+                  className="w-full p-2 rounded bg-[#0d0d2e] border border-white/15 text-xs"
+                >
+                  <option value="Marketing Digital">Marketing Digital</option>
+                  <option value="Logistique Événementielle">Logistique Événementielle</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs mb-1">Module / Catégorie</label>
-              <select
-                value={editingService.category || 'Marketing Digital'}
-                onChange={(e) => setEditingService({ ...editingService, category: e.target.value as any })}
-                className="w-full p-2 rounded bg-[#0d0d2e] border border-white/15 text-xs"
-              >
-                <option value="Marketing Digital">Marketing Digital</option>
-                <option value="Logistique Événementielle">Logistique Événementielle</option>
-              </select>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs mb-1">Badge / Libellé (ex: BRANDING PRO)</label>
+                <input
+                  type="text"
+                  placeholder="ex: OFFRE DIGITAL"
+                  value={editingService.badge || ''}
+                  onChange={(e) => setEditingService({ ...editingService, badge: e.target.value })}
+                  className="w-full p-2 rounded bg-white/5 border border-white/15 text-xs"
+                />
+              </div>
+              <div>
+                <label className="block text-xs mb-1">Sous-titre / Tagline</label>
+                <input
+                  type="text"
+                  placeholder="ex: Positionnement & Identité d'Excellence"
+                  value={editingService.tagline || ''}
+                  onChange={(e) => setEditingService({ ...editingService, tagline: e.target.value })}
+                  className="w-full p-2 rounded bg-white/5 border border-white/15 text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+              <div>
+                <label className="block text-xs mb-1">Estimation Tarifaire (ex: À partir de 350 000 FCFA)</label>
+                <input
+                  type="text"
+                  placeholder="ex: Sur devis"
+                  value={editingService.priceEstimate || ''}
+                  onChange={(e) => setEditingService({ ...editingService, priceEstimate: e.target.value })}
+                  className="w-full p-2 rounded bg-white/5 border border-white/15 text-xs"
+                />
+              </div>
+              <div className="pt-4">
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-[#00C2C2]">
+                  <input
+                    type="checkbox"
+                    checked={!!editingService.popular}
+                    onChange={(e) => setEditingService({ ...editingService, popular: e.target.checked })}
+                    className="rounded bg-white/10 border-white/20 text-[#6C68F4] focus:ring-0"
+                  />
+                  <span>Marquer comme Offre Recommandée ★</span>
+                </label>
+              </div>
             </div>
 
             <ImageUploader
@@ -1003,7 +2185,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             />
 
             <div>
-              <label className="block text-xs mb-1">Description courte</label>
+              <label className="block text-xs mb-1">Description courte (Affichée sur la carte)</label>
               <textarea
                 rows={2}
                 value={editingService.shortDescription || ''}
@@ -1011,8 +2193,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 className="w-full p-2 rounded bg-white/5 border border-white/15 text-xs"
               ></textarea>
             </div>
+
             <div>
-              <label className="block text-xs mb-1">Description complète</label>
+              <label className="block text-xs mb-1">Description complète (Affichée dans les détails)</label>
               <textarea
                 rows={3}
                 value={editingService.fullDescription || ''}
@@ -1020,9 +2203,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 className="w-full p-2 rounded bg-white/5 border border-white/15 text-xs"
               ></textarea>
             </div>
+
+            <div>
+              <label className="block text-xs mb-1 font-bold text-[#00C2C2]">Prestations Incluses / Inclusions</label>
+              <div className="space-y-2">
+                {serviceFeatures.map((feat, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder={`Prestation ${idx + 1} (ex: Audit de marque)`}
+                      value={feat}
+                      onChange={(e) => {
+                        const newFeats = [...serviceFeatures];
+                        newFeats[idx] = e.target.value;
+                        setServiceFeatures(newFeats);
+                      }}
+                      className="w-full p-2 rounded bg-white/5 border border-white/15 text-xs placeholder-slate-500 text-white"
+                    />
+                    {serviceFeatures.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newFeats = serviceFeatures.filter((_, i) => i !== idx);
+                          setServiceFeatures(newFeats);
+                        }}
+                        className="px-2 py-1 text-xs text-rose-400 hover:text-rose-300 bg-white/5 rounded border border-white/15 cursor-pointer"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setServiceFeatures([...serviceFeatures, ''])}
+                  className="px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 rounded font-medium transition text-white cursor-pointer"
+                >
+                  + Ajouter une prestation
+                </button>
+              </div>
+            </div>
+
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" onClick={() => setEditingService(null)} className="px-4 py-2 rounded text-xs bg-white/10 cursor-pointer">Annuler</button>
-              <button type="submit" className="px-4 py-2 rounded text-xs font-bold bg-[#6C68F4] cursor-pointer">Enregistrer</button>
+              <button type="submit" className="px-4 py-2 rounded text-xs font-bold bg-[#6C68F4] cursor-pointer">Enregistrer l'Offre</button>
             </div>
           </form>
         </div>
@@ -1152,6 +2376,38 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
 
             <div>
+              <label className="block text-xs font-bold mb-1.5 text-[#00C2C2]">Spécifications Techniques (5 lignes)</label>
+              <div className="space-y-2">
+                {[0, 1, 2, 3, 4].map((idx) => (
+                  <div key={idx} className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder={`Caractéristique ${idx + 1} (ex: Poids)`}
+                      value={specKeys[idx]}
+                      onChange={(e) => {
+                        const newKeys = [...specKeys];
+                        newKeys[idx] = e.target.value;
+                        setSpecKeys(newKeys);
+                      }}
+                      className="w-1/2 p-2 rounded bg-white/5 border border-white/15 text-xs placeholder-slate-500 text-white"
+                    />
+                    <input
+                      type="text"
+                      placeholder={`Valeur ${idx + 1} (ex: 26 kg)`}
+                      value={specValues[idx]}
+                      onChange={(e) => {
+                        const newValues = [...specValues];
+                        newValues[idx] = e.target.value;
+                        setSpecValues(newValues);
+                      }}
+                      className="w-1/2 p-2 rounded bg-white/5 border border-white/15 text-xs placeholder-slate-500 text-white"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
               <label className="block text-xs mb-1">Description</label>
               <textarea
                 rows={2}
@@ -1210,9 +2466,152 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 className="w-full p-2 rounded bg-white/5 border border-white/15 text-xs"
               ></textarea>
             </div>
+
+            <div>
+              <label className="block text-xs mb-1">Inclusions / Éléments du Pack (Ce que comprend ce pack)</label>
+              <div className="space-y-2">
+                {packInclusions.map((inc, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder={`Élément ${idx + 1} (ex: Création de logo)`}
+                      value={inc}
+                      onChange={(e) => {
+                        const newIncs = [...packInclusions];
+                        newIncs[idx] = e.target.value;
+                        setPackInclusions(newIncs);
+                      }}
+                      className="w-full p-2 rounded bg-white/5 border border-white/15 text-xs placeholder-slate-500 text-white"
+                    />
+                    {packInclusions.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newIncs = packInclusions.filter((_, i) => i !== idx);
+                          setPackInclusions(newIncs);
+                        }}
+                        className="px-2 py-1 text-xs text-rose-400 hover:text-rose-300 bg-white/5 rounded border border-white/15"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setPackInclusions([...packInclusions, ''])}
+                  className="px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 rounded font-medium transition text-white"
+                >
+                  + Ajouter un élément
+                </button>
+              </div>
+            </div>
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" onClick={() => setEditingPack(null)} className="px-4 py-2 rounded text-xs bg-white/10 cursor-pointer">Annuler</button>
               <button type="submit" className="px-4 py-2 rounded text-xs font-bold bg-[#6C68F4] cursor-pointer">Enregistrer</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Partner Modal */}
+      {editingPartner && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <form onSubmit={handleSavePartner} className="w-full max-w-lg p-6 rounded-2xl bg-[#141446] border border-[#00C2C2] space-y-4 text-white max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2">
+                <Handshake className="w-5 h-5 text-[#00C2C2]" />
+                <h3 className="font-bold text-lg">{editingPartner.id ? 'Modifier le Partenaire' : 'Nouveau Partenaire'}</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingPartner(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">Nom du Partenaire / Marque *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="ex: L-Acoustics ou Orange Cameroun"
+                  value={editingPartner.name || ''}
+                  onChange={(e) => setEditingPartner({ ...editingPartner, name: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-xs text-white focus:outline-none focus:border-[#00C2C2]"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">Catégorie / Rôle</label>
+                  <input
+                    type="text"
+                    placeholder="ex: Sonorisation Pro, Sponsor, Média"
+                    value={editingPartner.category || ''}
+                    onChange={(e) => setEditingPartner({ ...editingPartner, category: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-xs text-white focus:outline-none focus:border-[#00C2C2]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">Lien Site Web (Optionnel)</label>
+                  <input
+                    type="url"
+                    placeholder="https://www.exemple.com"
+                    value={editingPartner.website || ''}
+                    onChange={(e) => setEditingPartner({ ...editingPartner, website: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-xs text-white focus:outline-none focus:border-[#00C2C2]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <ImageUploader
+                  label="Logo du Partenaire (Format PNG/SVG/JPG recommandé)"
+                  value={editingPartner.logo || ''}
+                  onChange={(url) => setEditingPartner({ ...editingPartner, logo: url })}
+                  adminToken={adminToken}
+                />
+
+                {editingPartner.logo && (
+                  <div className="mt-2 p-2 bg-white/5 border border-white/10 rounded-xl flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-lg bg-white/10 p-1 flex items-center justify-center shrink-0">
+                      <img src={editingPartner.logo} alt="Aperçu" className="max-h-full max-w-full object-contain" />
+                    </div>
+                    <div className="text-xs text-slate-300 truncate">Aperçu du logo partenaire</div>
+                  </div>
+                )}
+              </div>
+
+              <label className="flex items-center gap-2 cursor-pointer pt-2">
+                <input
+                  type="checkbox"
+                  checked={editingPartner.visible !== false}
+                  onChange={(e) => setEditingPartner({ ...editingPartner, visible: e.target.checked })}
+                  className="rounded bg-white/10 border-white/20 text-[#00C2C2] focus:ring-0"
+                />
+                <span className="text-xs font-medium text-slate-300">Visible sur le bandeau public</span>
+              </label>
+            </div>
+
+            <div className="pt-4 border-t border-white/10 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingPartner(null)}
+                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-bold text-slate-300 cursor-pointer"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-xl bg-[#00C2C2] hover:bg-[#00a3a3] text-xs font-bold text-slate-950 cursor-pointer"
+              >
+                Enregistrer le Partenaire
+              </button>
             </div>
           </form>
         </div>
@@ -1251,6 +2650,56 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      {deleteConfirm.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-md p-6 rounded-2xl bg-[#141446] border border-rose-500/40 space-y-4 text-white shadow-2xl">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-rose-500/20 text-rose-400">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-white">{deleteConfirm.title}</h3>
+                <p className="text-xs text-slate-400">Confirmation requise</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed">
+              {deleteConfirm.message}
+            </p>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirm({ ...deleteConfirm, isOpen: false })}
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/15 text-slate-300 cursor-pointer"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  await deleteConfirm.onConfirm();
+                  setDeleteConfirm({ ...deleteConfirm, isOpen: false });
+                }}
+                className="px-4 py-2.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30 cursor-pointer"
+              >
+                Confirmer la suppression
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Status Modal */}
+      <StatusModal
+        isOpen={statusModal.isOpen}
+        onClose={() => setStatusModal({ ...statusModal, isOpen: false })}
+        type={statusModal.type}
+        title={statusModal.title}
+        message={statusModal.message}
+      />
 
     </div>
   );

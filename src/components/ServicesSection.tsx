@@ -1,215 +1,162 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ServiceItem } from '../types';
-import { Sparkles, Check, ArrowRight, Compass, Code2, TrendingUp, Share2, Volume2, Zap, Box, Tv } from 'lucide-react';
+import { Check, Sparkles, ArrowRight } from 'lucide-react';
+import { motion } from 'motion/react';
+import { ServicePatternBackground } from './ServicePatternBackground';
 
 interface ServicesSectionProps {
   services: ServiceItem[];
   onSelectServiceForDevis: (serviceTitle: string) => void;
+  theme?: 'light' | 'dark';
 }
 
 export const ServicesSection: React.FC<ServicesSectionProps> = ({
   services,
-  onSelectServiceForDevis
+  onSelectServiceForDevis,
+  theme = 'light'
 }) => {
-  const [filter, setFilter] = useState<'Tous' | 'Marketing Digital' | 'Logistique Événementielle'>('Tous');
-  const [selectedServiceModal, setSelectedServiceModal] = useState<ServiceItem | null>(null);
+  const isLight = theme === 'light';
 
-  const renderIcon = (iconName: string) => {
-    switch (iconName) {
-      case 'Compass': return <Compass className="w-6 h-6" />;
-      case 'Code2': return <Code2 className="w-6 h-6" />;
-      case 'TrendingUp': return <TrendingUp className="w-6 h-6" />;
-      case 'Share2': return <Share2 className="w-6 h-6" />;
-      case 'Volume2': return <Volume2 className="w-6 h-6" />;
-      case 'Zap': return <Zap className="w-6 h-6" />;
-      case 'Box': return <Box className="w-6 h-6" />;
-      case 'Tv': return <Tv className="w-6 h-6" />;
-      default: return <Sparkles className="w-6 h-6" />;
-    }
-  };
-
-  const filteredServices = services.filter((s) => {
-    if (filter === 'Tous') return true;
-    return s.category === filter;
-  });
+  const marketingServices = services.filter((s) => s.category === 'Marketing Digital');
 
   return (
-    <section id="services" className="py-20 bg-[#0d0d2e] text-white relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Section Title & Header */}
-        <div className="text-center max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#6C68F4]/20 text-[#00C2C2] text-xs font-semibold uppercase tracking-wider">
-            <span>Catalogue de Services</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-            Des Solutions sur-mesure pour Projeter votre Marque
-          </h2>
-          <p className="text-slate-300 text-base">
-            Deux modules d'intervention hautement spécialisés, conçus pour répondre à toutes vos exigences de stratégie digitale et de régie événementielle.
-          </p>
-        </div>
+    <section id="services" className={`py-20 transition-colors duration-200 relative overflow-hidden ${
+      isLight ? 'bg-white text-slate-900' : 'bg-[#0d0d2e] text-white'
+    }`}>
+      {/* Recreated geometric square background pattern */}
+      <ServicePatternBackground theme={theme} />
 
-        {/* Filter Tabs */}
-        <div className="flex justify-center mt-8 sm:mt-10 max-w-full overflow-x-auto scrollbar-none px-2">
-          <div className="inline-flex p-1.5 rounded-2xl bg-[#141446] border border-white/10 gap-1 shrink-0">
-            {(['Tous', 'Marketing Digital', 'Logistique Événementielle'] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setFilter(tab)}
-                className={`px-3.5 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                  filter === tab
-                    ? 'bg-[#6C68F4] text-white shadow-md shadow-[#6C68F4]/20 font-bold'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5 active:bg-white/10'
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.15 }}
+          transition={{ duration: 0.6 }}
+          className="text-center max-w-3xl mx-auto space-y-4"
+        >
+          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider whitespace-nowrap ${
+            isLight ? 'bg-slate-100 text-[#102A6B] border border-slate-200' : 'bg-[#6C68F4]/20 text-[#00C2C2]'
+          }`}>
+            <Sparkles className="w-4 h-4 text-[#5362DC] shrink-0" />
+            <span className="whitespace-nowrap">Offres & Services Marketing Digital</span>
+          </div>
+          <h2 className={`text-3xl sm:text-4xl font-extrabold tracking-tight ${isLight ? 'text-black' : 'text-white'}`}>
+            Des Offres Conçues pour Propulser votre Marque
+          </h2>
+          <p className={`text-base ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
+            Formules stratégiques sur-mesure pour maximiser votre visibilité, captiver votre audience et booster vos conversions.
+          </p>
+        </motion.div>
+
+        {/* Services Cards Grid - Exact same style as PacksSection */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
+          {marketingServices.map((service, index) => {
+            const isPopular = service.popular;
+            return (
+              <motion.div
+                key={service.id}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: false, amount: 0.15 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className={`relative rounded-3xl p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 ${
+                  isLight
+                    ? isPopular
+                      ? 'bg-white border-2 border-[#5362DC] shadow-xl transform lg:-translate-y-2'
+                      : 'bg-white border-2 border-slate-200 hover:border-slate-300 shadow-xs'
+                    : isPopular
+                      ? 'bg-[#141446] border-2 border-[#6C68F4] shadow-2xl shadow-[#6C68F4]/20 transform lg:-translate-y-2'
+                      : 'bg-[#141446] border border-white/10 hover:border-white/30'
                 }`}
               >
-                {tab}
-              </button>
-            ))}
-          </div>
-        </div>
+                {/* Popular Ribbon Badge */}
+                {isPopular && (
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#5362DC] text-white text-[10px] md:text-xs font-black uppercase tracking-wider shadow-md whitespace-nowrap">
+                    ★ Recommandé Forward One
+                  </div>
+                )}
 
-        {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 mt-12">
-          {filteredServices.map((service) => {
-            const isDigital = service.category === 'Marketing Digital';
-            const accentColor = isDigital ? 'text-[#6C68F4]' : 'text-[#00C2C2]';
-            const borderColor = isDigital ? 'hover:border-[#6C68F4]/60' : 'hover:border-[#00C2C2]/60';
-            const badgeBg = isDigital ? 'bg-[#6C68F4]/10 text-[#6C68F4] border-[#6C68F4]/30' : 'bg-[#00C2C2]/10 text-[#00C2C2] border-[#00C2C2]/30';
-
-            return (
-              <div
-                key={service.id}
-                className={`group relative rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 hover:shadow-2xl ${borderColor}`}
-              >
-                <div className="space-y-4">
+                <div className="space-y-6">
                   
-                  {/* Category Badge & Icon */}
-                  <div className="flex items-center justify-between">
-                    <span className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-widest border ${badgeBg}`}>
-                      {service.category}
-                    </span>
-                    <div className={`p-3 rounded-xl bg-white/5 ${accentColor} group-hover:scale-110 transition-transform`}>
-                      {renderIcon(service.iconName)}
+                  {/* Service Image Banner */}
+                  {service.image && (
+                    <div className="relative w-full h-44 rounded-2xl overflow-hidden shadow-inner bg-slate-900">
+                      <img
+                        src={service.image}
+                        alt={service.title}
+                        className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+                        <span className="px-2.5 py-1 rounded-md text-[10px] md:text-xs font-extrabold uppercase whitespace-nowrap bg-black/60 text-[#00C2C2] backdrop-blur-md border border-white/20">
+                          {service.badge || service.category || 'OFFRE DIGITAL'}
+                        </span>
+                      </div>
                     </div>
+                  )}
+
+                  {/* Top info */}
+                  <div>
+                    {!service.image && (
+                      <span className={`px-2.5 py-1 rounded-md text-[10px] md:text-xs font-extrabold uppercase whitespace-nowrap inline-block ${
+                        isLight ? 'bg-slate-100 text-[#102A6B] border border-slate-200' : 'bg-white/10 text-[#00C2C2]'
+                      }`}>
+                        {service.badge || service.category || 'OFFRE DIGITAL'}
+                      </span>
+                    )}
+                    <h3 className={`text-2xl font-extrabold ${service.image ? 'mt-1' : 'mt-3'} break-words ${isLight ? 'text-black' : 'text-white'}`}>{service.title}</h3>
+                    {service.tagline && <p className="text-xs text-[#5362DC] font-bold mt-1 break-words leading-snug">{service.tagline}</p>}
                   </div>
 
-                  {/* Title & Short Desc */}
-                  <h3 className="text-xl font-bold text-white group-hover:text-[#00C2C2] transition-colors">
-                    {service.title}
-                  </h3>
-                  <p className="text-sm text-[#738591] leading-relaxed">
+                  {/* Price Estimate */}
+                  <div className={`p-4 rounded-xl border ${
+                    isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/5'
+                  }`}>
+                    <div className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Estimation forfaitaire :</div>
+                    <div className={`text-lg sm:text-xl font-black mt-1 break-words leading-tight ${isLight ? 'text-[#5362DC]' : 'text-white'}`}>{service.priceEstimate || 'Sur devis'}</div>
+                  </div>
+
+                  <p className={`text-xs leading-relaxed ${isLight ? 'text-black font-normal' : 'text-slate-300'}`}>
                     {service.shortDescription}
                   </p>
 
-                  {/* Feature Checklist */}
-                  <div className="pt-2 space-y-2">
-                    {service.features.map((feature, idx) => (
-                      <div key={idx} className="flex items-center gap-3 text-xs text-gray-300">
-                        <span className={`w-1.5 h-1.5 rounded-full ${isDigital ? 'bg-[#6C68F4]' : 'bg-[#00C2C2]'} shrink-0`}></span>
-                        <span>{feature}</span>
+                  {/* Inclusions Checklist */}
+                  {service.features && service.features.length > 0 && (
+                    <div className="space-y-2.5 pt-2">
+                      <div className={`text-xs font-bold uppercase tracking-wider whitespace-nowrap ${isLight ? 'text-slate-900' : 'text-slate-400'}`}>
+                        Ce que comprend cette offre :
                       </div>
-                    ))}
-                  </div>
+                      {service.features.map((item, idx) => (
+                        <div key={idx} className="flex items-start gap-2 text-xs">
+                          <Check className="w-4 h-4 text-[#5362DC] shrink-0 mt-0.5" />
+                          <span className={`font-medium ${isLight ? 'text-black' : 'text-slate-200'}`}>{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                 </div>
 
-                {/* Card Footer Actions */}
-                <div className="pt-6 mt-6 border-t border-white/10 flex items-center justify-between">
-                  <button
-                    onClick={() => setSelectedServiceModal(service)}
-                    className="text-xs font-bold text-[#738591] hover:text-white underline cursor-pointer"
-                  >
-                    Détails complets
-                  </button>
-
+                {/* Call to action */}
+                <div className={`pt-8 mt-8 border-t ${isLight ? 'border-slate-100' : 'border-white/10'}`}>
                   <button
                     onClick={() => onSelectServiceForDevis(service.title)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold text-white bg-[#6C68F4] hover:bg-[#5b57e0] shadow-md shadow-[#6C68F4]/20 transition-all cursor-pointer"
+                    className="w-full py-3 rounded-full font-bold text-xs flex items-center justify-center gap-2 text-white bg-[#5362DC] hover:bg-[#4351c4] shadow-md shadow-[#5362DC]/20 transition-all cursor-pointer whitespace-nowrap"
                   >
-                    <span>Demander Devis</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <span className="whitespace-nowrap">Demander cette Offre</span>
+                    <ArrowRight className="w-4 h-4 shrink-0" />
                   </button>
                 </div>
 
-              </div>
+              </motion.div>
             );
           })}
         </div>
 
       </div>
-
-      {/* Detail Modal */}
-      {selectedServiceModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="relative w-full max-w-2xl rounded-2xl bg-[#141446] border border-[#6C68F4]/40 p-6 sm:p-8 space-y-6 text-white shadow-2xl max-h-[90vh] overflow-y-auto">
-            
-            <div className="flex items-start justify-between border-b border-white/10 pb-4">
-              <div>
-                <span className="text-xs font-bold text-[#00C2C2] uppercase tracking-wider">
-                  {selectedServiceModal.category}
-                </span>
-                <h3 className="text-2xl font-bold text-white mt-1">
-                  {selectedServiceModal.title}
-                </h3>
-              </div>
-              <button
-                onClick={() => setSelectedServiceModal(null)}
-                className="p-1 text-slate-400 hover:text-white text-xl font-bold cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Image Preview */}
-            <div className="h-48 rounded-xl overflow-hidden relative">
-              <img
-                src={selectedServiceModal.image}
-                alt={selectedServiceModal.title}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#141446] via-transparent to-transparent"></div>
-            </div>
-
-            <p className="text-sm text-slate-300 leading-relaxed">
-              {selectedServiceModal.fullDescription}
-            </p>
-
-            {/* Detailed Features */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#FFAD5B]">Inclusions & Prestations :</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {selectedServiceModal.features.map((f, idx) => (
-                  <div key={idx} className="flex items-center gap-2 p-2 rounded-lg bg-white/5 text-xs text-slate-200">
-                    <Check className="w-4 h-4 text-[#00C2C2]" />
-                    <span>{f}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="pt-4 flex justify-end gap-3">
-              <button
-                onClick={() => setSelectedServiceModal(null)}
-                className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:bg-white/5 cursor-pointer"
-              >
-                Fermer
-              </button>
-
-              <button
-                onClick={() => {
-                  const title = selectedServiceModal.title;
-                  setSelectedServiceModal(null);
-                  onSelectServiceForDevis(title);
-                }}
-                className="px-5 py-2 rounded-lg text-xs font-bold text-white bg-[#6C68F4] hover:bg-[#5b57e0] cursor-pointer"
-              >
-                Inclure dans mon Devis
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
     </section>
   );
 };

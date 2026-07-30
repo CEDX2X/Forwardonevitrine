@@ -9,6 +9,10 @@ export interface ServiceItem {
   iconName: string;
   features: string[];
   image: string;
+  badge?: string;
+  tagline?: string;
+  priceEstimate?: string;
+  popular?: boolean;
 }
 
 export interface ProductItem {
@@ -108,6 +112,53 @@ export interface PreReservationItem {
   };
 }
 
+export interface CarouselSlideItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  image: string;
+  buttonText: string;
+  tab: string; // e.g. 'services', 'catalog', 'packs', 'blog', 'about'
+}
+
+export interface ServiceCategoryItem {
+  id: string;
+  title: string;
+  image: string;
+  description: string;
+  type: 'marketing' | 'logistique' | 'billetterie';
+  available: boolean;
+}
+
+export interface PartnerItem {
+  id: string;
+  name: string;
+  logo: string;
+  category?: string;
+  website?: string;
+  visible?: boolean;
+}
+
+export interface TestimonialItem {
+  id: string;
+  clientName: string;
+  clientRole: string;
+  company: string;
+  comment: string;
+  rating: number; // 1-5 stars
+  avatar?: string;
+  date?: string;
+}
+
+export interface VideoCardItem {
+  id: string;
+  title: string;
+  subtitle?: string;
+  videoUrl: string; // YouTube embed link, MP4 link, etc.
+  thumbnailImage?: string;
+  badge?: string;
+}
+
 export interface SiteContent {
   heroTitle: string;
   heroSubtitle: string;
@@ -118,6 +169,17 @@ export interface SiteContent {
   contactEmail: string;
   contactPhone: string;
   contactAddress: string;
+  heroSlides?: CarouselSlideItem[];
+  serviceCategories?: ServiceCategoryItem[];
+  partners?: PartnerItem[];
+  partnersBannerTitle?: string;
+  partnersBannerEnabled?: boolean;
+  testimonials?: TestimonialItem[];
+  testimonialsTitle?: string;
+  testimonialsSubtitle?: string;
+  videoSectionTitle?: string;
+  videoSectionSubtitle?: string;
+  videoCards?: VideoCardItem[];
 }
 
 export interface AdminStats {

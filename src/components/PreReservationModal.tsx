@@ -116,6 +116,11 @@ export const PreReservationModal: React.FC<PreReservationModalProps> = ({
       return;
     }
 
+    if (grandTotal < 250000) {
+      alert('Le montant minimum de budget pour soumettre un devis ou une pré-réservation est de 250 000 FCFA. Veuillez ajouter d\'autres équipements ou ajuster la durée.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -149,24 +154,24 @@ export const PreReservationModal: React.FC<PreReservationModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in overflow-y-auto">
-      <div className="relative w-full max-w-3xl rounded-3xl bg-[#0d0d2e] border border-[#00C2C2]/40 p-6 sm:p-8 space-y-6 text-white shadow-2xl my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md animate-fade-in overflow-y-auto">
+      <div className="relative w-full max-w-3xl rounded-3xl bg-[#0d0d2e] border border-[#00C2C2]/40 p-4 sm:p-8 space-y-5 sm:space-y-6 text-white shadow-2xl my-4 sm:my-8 max-h-[95vh] overflow-y-auto">
         
         {/* Header */}
-        <div className="flex items-start justify-between border-b border-white/10 pb-4">
+        <div className="flex items-start justify-between border-b border-white/10 pb-3 sm:pb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-[#00C2C2]/20 text-[#00C2C2]">
-              <Calendar className="w-6 h-6" />
+            <div className="p-2 sm:p-2.5 rounded-xl bg-[#00C2C2]/20 text-[#00C2C2] shrink-0">
+              <Calendar className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <h3 className="text-xl sm:text-2xl font-bold text-white">Pré-réservation de Matériel Événementiel</h3>
-              <p className="text-xs text-[#FFAD5B] font-medium">Validation instantanée du stock & Envoi d'Emails de notification</p>
+              <h3 className="text-lg sm:text-2xl font-bold text-white">Pré-réservation de Matériel Événementiel</h3>
+              <p className="text-[11px] sm:text-xs text-[#FFAD5B] font-medium">Validation instantanée du stock & Envoi d'Emails de notification</p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/5 cursor-pointer"
+            className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-white/5 cursor-pointer shrink-0"
           >
             <X className="w-6 h-6" />
           </button>
@@ -218,18 +223,18 @@ export const PreReservationModal: React.FC<PreReservationModalProps> = ({
                   setCompletedData(null);
                   onClose();
                 }}
-                className="px-6 py-2.5 rounded-xl text-xs font-bold text-slate-950 bg-[#00C2C2] hover:bg-[#00a3a3] cursor-pointer"
+                className="w-full sm:w-auto px-6 py-3 rounded-xl text-xs font-bold text-slate-950 bg-[#00C2C2] hover:bg-[#00a3a3] cursor-pointer"
               >
                 Terminer & Fermer
               </button>
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             
             {/* Equipment Cart List */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
                   <ShoppingBag className="w-4 h-4 text-[#00C2C2]" />
                   <span>Équipements Sélectionnés ({selectedItems.length})</span>
@@ -243,9 +248,9 @@ export const PreReservationModal: React.FC<PreReservationModalProps> = ({
                       e.target.value = '';
                     }
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/15 text-xs text-white focus:outline-none focus:border-[#00C2C2]"
+                  className="w-full sm:w-auto px-3 py-2 sm:py-1.5 rounded-xl bg-white/5 border border-white/15 text-xs text-white focus:outline-none focus:border-[#00C2C2]"
                 >
-                  <option value="" className="bg-[#141446]">＋ Ajouter un équipement au panier...</option>
+                  <option value="" className="bg-[#141446]">＋ Ajouter un équipement...</option>
                   {availableProducts.map((p) => (
                     <option key={p.id} value={p.id} className="bg-[#141446]">
                       {p.name} ({p.dailyRate.toLocaleString()} FCFA/j)
@@ -259,31 +264,32 @@ export const PreReservationModal: React.FC<PreReservationModalProps> = ({
                   Aucun matériel dans votre panier de réservation.
                 </div>
               ) : (
-                <div className="rounded-2xl bg-white/5 border border-white/10 p-3 space-y-2 max-h-40 overflow-y-auto">
+                <div className="rounded-2xl bg-white/5 border border-white/10 p-3 space-y-2.5 max-h-56 overflow-y-auto">
                   {selectedItems.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between p-2.5 rounded-xl bg-[#141446] text-xs">
-                      <div className="font-semibold text-white truncate max-w-[200px] sm:max-w-xs">
-                        {item.name}
+                    <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 rounded-xl bg-[#141446] border border-white/10 text-xs">
+                      <div className="font-semibold text-white flex-1 min-w-0">
+                        <span className="block truncate">{item.name}</span>
+                        <span className="text-[11px] text-slate-400 sm:hidden">{item.dailyRate.toLocaleString()} FCFA/j</span>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        <span className="text-slate-400">{item.dailyRate.toLocaleString()} FCFA/j</span>
+                      <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/5">
+                        <span className="text-slate-400 hidden sm:inline">{item.dailyRate.toLocaleString()} FCFA/j</span>
 
-                        <div className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-lg border border-white/10">
+                        <div className="flex items-center gap-2 bg-white/5 px-2.5 py-1.5 rounded-lg border border-white/10">
                           <button
                             type="button"
                             onClick={() => handleQuantityChange(item.id, -1)}
-                            className="text-slate-400 hover:text-white"
+                            className="text-slate-400 hover:text-white p-0.5"
                           >
-                            <Minus className="w-3 h-3" />
+                            <Minus className="w-3.5 h-3.5" />
                           </button>
-                          <span className="font-bold text-white px-1">{item.quantity}</span>
+                          <span className="font-bold text-white px-1.5 min-w-[20px] text-center">{item.quantity}</span>
                           <button
                             type="button"
                             onClick={() => handleQuantityChange(item.id, 1)}
-                            className="text-slate-400 hover:text-white"
+                            className="text-slate-400 hover:text-white p-0.5"
                           >
-                            <Plus className="w-3 h-3" />
+                            <Plus className="w-3.5 h-3.5" />
                           </button>
                         </div>
 
@@ -294,7 +300,8 @@ export const PreReservationModal: React.FC<PreReservationModalProps> = ({
                         <button
                           type="button"
                           onClick={() => handleRemoveItem(item.id)}
-                          className="text-rose-400 hover:text-rose-300 ml-1"
+                          className="text-rose-400 hover:text-rose-300 p-1 ml-1"
+                          title="Supprimer"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -306,7 +313,7 @@ export const PreReservationModal: React.FC<PreReservationModalProps> = ({
             </div>
 
             {/* Dates & Cost Calculation */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-2xl bg-[#141446] border border-white/10">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-2xl bg-[#141446] border border-white/10">
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">Date de Début *</label>
                 <input
@@ -314,7 +321,7 @@ export const PreReservationModal: React.FC<PreReservationModalProps> = ({
                   required
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-xs text-white focus:outline-none focus:border-[#00C2C2]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-sm sm:text-xs text-white focus:outline-none focus:border-[#00C2C2]"
                 />
               </div>
 
@@ -325,19 +332,24 @@ export const PreReservationModal: React.FC<PreReservationModalProps> = ({
                   required
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-xs text-white focus:outline-none focus:border-[#00C2C2]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-sm sm:text-xs text-white focus:outline-none focus:border-[#00C2C2]"
                 />
               </div>
 
-              <div className="flex flex-col justify-center text-right sm:text-right border-t sm:border-t-0 sm:border-l border-white/10 pt-2 sm:pt-0 sm:pl-4">
+              <div className="flex flex-col justify-center text-left sm:text-right border-t sm:border-t-0 sm:border-l border-white/10 pt-3 sm:pt-0 sm:pl-4">
                 <div className="text-[11px] text-slate-400">Durée : <strong className="text-white">{durationDays} jour(s)</strong></div>
                 <div className="text-xs text-slate-400 mt-1">Estimation Totale :</div>
-                <div className="text-xl font-black text-[#00C2C2]">{grandTotal.toLocaleString()} FCFA HT</div>
+                <div className="text-lg sm:text-xl font-black text-[#00C2C2]">{grandTotal.toLocaleString()} FCFA HT</div>
+                {grandTotal < 250000 && (
+                  <div className="text-[10px] text-amber-400 font-medium mt-1">
+                    ⚠️ Budget min. requis: 250 000 FCFA
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Client Coordinates */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">Nom Complet / Responsable *</label>
                 <input
@@ -346,7 +358,7 @@ export const PreReservationModal: React.FC<PreReservationModalProps> = ({
                   placeholder="Ex: Sophie Mercier"
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#00C2C2]"
+                  className="w-full px-3.5 py-3 sm:py-2.5 rounded-xl bg-white/5 border border-white/15 text-sm sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#00C2C2]"
                 />
               </div>
 
@@ -357,7 +369,7 @@ export const PreReservationModal: React.FC<PreReservationModalProps> = ({
                   placeholder="Ex: Agence Événements X"
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#00C2C2]"
+                  className="w-full px-3.5 py-3 sm:py-2.5 rounded-xl bg-white/5 border border-white/15 text-sm sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#00C2C2]"
                 />
               </div>
 
@@ -369,7 +381,7 @@ export const PreReservationModal: React.FC<PreReservationModalProps> = ({
                   placeholder="sophie@agence.cm"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#00C2C2]"
+                  className="w-full px-3.5 py-3 sm:py-2.5 rounded-xl bg-white/5 border border-white/15 text-sm sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#00C2C2]"
                 />
               </div>
 
@@ -381,7 +393,7 @@ export const PreReservationModal: React.FC<PreReservationModalProps> = ({
                   placeholder="+237 6 98 76 54 32"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#00C2C2]"
+                  className="w-full px-3.5 py-3 sm:py-2.5 rounded-xl bg-white/5 border border-white/15 text-sm sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#00C2C2]"
                 />
               </div>
             </div>
@@ -394,7 +406,7 @@ export const PreReservationModal: React.FC<PreReservationModalProps> = ({
                 placeholder="Ex: Palais des Sports de Yaoundé, Hôtel Sawa Douala..."
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#00C2C2]"
+                className="w-full px-3.5 py-3 sm:py-2.5 rounded-xl bg-white/5 border border-white/15 text-sm sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#00C2C2]"
               />
             </div>
 
@@ -406,23 +418,23 @@ export const PreReservationModal: React.FC<PreReservationModalProps> = ({
                 placeholder="Heures d'accès, besoins en régisseur technique sur place..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#00C2C2]"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-sm sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#00C2C2]"
               ></textarea>
             </div>
 
             {/* Actions */}
-            <div className="pt-3 border-t border-white/10 flex items-center justify-between">
-              <span className="text-[11px] text-slate-400">
+            <div className="pt-3 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <span className="text-[11px] text-slate-400 text-center sm:text-left whitespace-nowrap">
                 📩 Envoi immédiat de l'email de confirmation.
               </span>
 
               <button
                 type="submit"
                 disabled={isSubmitting || selectedItems.length === 0}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-xs text-slate-950 bg-[#00C2C2] hover:bg-[#00a3a3] shadow-lg cursor-pointer disabled:opacity-50"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 sm:py-3 rounded-xl font-bold text-xs text-slate-950 bg-[#00C2C2] hover:bg-[#00a3a3] shadow-lg cursor-pointer disabled:opacity-50 whitespace-nowrap"
               >
-                <Send className="w-4 h-4" />
-                <span>{isSubmitting ? 'Pré-réservation en cours...' : 'Valider la Pré-réservation'}</span>
+                <Send className="w-4 h-4 shrink-0" />
+                <span className="whitespace-nowrap">{isSubmitting ? 'Pré-réservation en cours...' : 'Valider la Pré-réservation'}</span>
               </button>
             </div>
 

@@ -1,4 +1,201 @@
-import { ArticleItem, CommentItem, PackItem, ProductItem, ServiceItem, SiteContent } from '../types';
+import { ArticleItem, CommentItem, PackItem, ProductItem, ServiceItem, SiteContent, CarouselSlideItem, PartnerItem, TestimonialItem, VideoCardItem } from '../types';
+
+export const initialHeroSlides: CarouselSlideItem[] = [
+  {
+    id: 'slide-1',
+    title: 'Services & Expertise 360°',
+    subtitle: 'Stratégie digitale, web development, régie technique et accompagnement sur-mesure pour tous vos projets.',
+    image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1800&q=85',
+    buttonText: 'Découvrir nos services',
+    tab: 'services'
+  },
+  {
+    id: 'slide-2',
+    title: 'Catalogue Matériel Professionnel',
+    subtitle: 'Sonorisation concert, éclairage scénique, écrans LED et backline disponibles à la location immédiate.',
+    image: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=1800&q=85',
+    buttonText: 'Explorer le catalogue',
+    tab: 'catalog'
+  },
+  {
+    id: 'slide-3',
+    title: 'Packs Événementiels Clés en Main',
+    subtitle: 'Solutions prêtes à l’emploi pour mariages, séminaires, concerts et soirées d’entreprise.',
+    image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1800&q=85',
+    buttonText: 'Voir les packs',
+    tab: 'packs'
+  },
+  {
+    id: 'slide-4',
+    title: 'Actualités & Conseils d’Experts',
+    subtitle: 'Guides techniques, tendances de l’innovation digitale et retours d’expérience de nos équipes.',
+    image: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1800&q=85',
+    buttonText: 'Lire les articles',
+    tab: 'blog'
+  },
+  {
+    id: 'slide-5',
+    title: 'À Propos de Forward One',
+    subtitle: 'Notre philosophie, notre engagement pour l’excellence opérationnelle et notre équipe de passionnés.',
+    image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1800&q=85',
+    buttonText: 'En savoir plus',
+    tab: 'about'
+  }
+];
+
+export const initialServiceCategories = [
+  {
+    id: 'cat-1',
+    title: 'Marketing Digital',
+    image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80',
+    description: 'Stratégies d’avant-garde, branding, développement web et acquisition ciblée.',
+    type: 'marketing' as const,
+    available: true
+  },
+  {
+    id: 'cat-2',
+    title: 'Logistique Événementielle',
+    image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=800&q=80',
+    description: 'Catalogue matériel 4K, éclairage asservi, scènes modulaires et packs clés en main.',
+    type: 'logistique' as const,
+    available: true
+  },
+  {
+    id: 'cat-3',
+    title: 'Billetterie',
+    image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
+    description: 'Plateforme de billetterie intelligente pour vos grands événements (Prochainement).',
+    type: 'billetterie' as const,
+    available: false
+  }
+];
+
+export const initialPartners: PartnerItem[] = [
+  {
+    id: 'partner-1',
+    name: 'L-Acoustics',
+    logo: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80',
+    category: 'Sonorisation Pro',
+    website: 'https://www.l-acoustics.com',
+    visible: true
+  },
+  {
+    id: 'partner-2',
+    name: 'Shure Audio',
+    logo: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?auto=format&fit=crop&w=400&q=80',
+    category: 'Microphonie HF',
+    website: 'https://www.shure.com',
+    visible: true
+  },
+  {
+    id: 'partner-3',
+    name: 'Blackmagic Design',
+    logo: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?auto=format&fit=crop&w=400&q=80',
+    category: 'Régie Vidéo & 4K',
+    website: 'https://www.blackmagicdesign.com',
+    visible: true
+  },
+  {
+    id: 'partner-4',
+    name: 'MA Lighting',
+    logo: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=400&q=80',
+    category: 'Éclairage Scénique',
+    website: 'https://www.malighting.com',
+    visible: true
+  },
+  {
+    id: 'partner-5',
+    name: 'Orange Cameroun',
+    logo: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80',
+    category: 'Partenaire Télécom',
+    website: 'https://www.orange.cm',
+    visible: true
+  },
+  {
+    id: 'partner-6',
+    name: 'Canal+ Events',
+    logo: 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=400&q=80',
+    category: 'Sponsor Média',
+    website: 'https://www.canalplus.com',
+    visible: true
+  },
+  {
+    id: 'partner-7',
+    name: 'Meta Business Partner',
+    logo: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=400&q=80',
+    category: 'Social Media Ads',
+    website: 'https://www.facebook.com/business',
+    visible: true
+  },
+  {
+    id: 'partner-8',
+    name: 'Google Marketing Platform',
+    logo: 'https://images.unsplash.com/photo-1573804633927-bfcbcd909acd?auto=format&fit=crop&w=400&q=80',
+    category: 'SEO & Digital',
+    website: 'https://marketingplatform.google.com',
+    visible: true
+  }
+];
+
+export const initialTestimonials: TestimonialItem[] = [
+  {
+    id: 'testi-1',
+    clientName: 'Marc-Antoine Kouamé',
+    clientRole: 'Directeur Marketing',
+    company: 'Orange Cameroun',
+    comment: 'La régie technique vidéo et son de Forward One a totalement métamorphosé notre convention annuelle. Une sonorisation cristalline et une réactivité exemplaire.',
+    rating: 5,
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+    date: '15 Juillet 2026'
+  },
+  {
+    id: 'testi-2',
+    clientName: 'Sylvie Nguema',
+    clientRole: 'Fondatrice & Event Manager',
+    company: 'Event Prestige Yaoundé',
+    comment: 'Le matériel son, lumière et scène loué chez Forward One est d’une propreté et d’une performance irréprochables. Nos soirées d’entreprise VIP sont toujours un franc succès !',
+    rating: 5,
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80',
+    date: '02 Juillet 2026'
+  },
+  {
+    id: 'testi-3',
+    clientName: 'Christian Mbarga',
+    clientRole: 'CEO & Fondateur',
+    company: 'Pulse Media Group',
+    comment: 'Forward One a conçu notre plateforme e-commerce et gère nos campagnes d’acquisition digitale. Taux de conversion et visibilité de marque multipliés par 3 en 90 jours.',
+    rating: 5,
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+    date: '28 Juin 2026'
+  }
+];
+
+export const initialVideoCards: VideoCardItem[] = [
+  {
+    id: 'video-1',
+    title: 'Régie Vidéo 4K & Sonorisation Concert Live',
+    subtitle: 'Captation multi-caméras et sonorisation L-Acoustics en direct du grand festival Akwa Live.',
+    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    thumbnailImage: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=1200&q=80',
+    badge: 'LOGISTIQUE ÉVÉNEMENTIELLE'
+  },
+  {
+    id: 'video-2',
+    title: 'Showroom Lumière & Scénographie Scénique',
+    subtitle: 'Démonstration de nos lyres asservies Robe BMFL et ponts aluminium certifiés SOCOTEC.',
+    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    thumbnailImage: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80',
+    badge: 'ÉCLAIRAGE & SCÈNE'
+  },
+  {
+    id: 'video-3',
+    title: 'Stratégie Branding & Web Performance 360°',
+    subtitle: 'Comment nous propulsons les marques leaders au Cameroun avec Next.js et du design d’avant-garde.',
+    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    thumbnailImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80',
+    badge: 'MARKETING DIGITAL'
+  }
+];
 
 export const initialSiteContent: SiteContent = {
   heroTitle: "Progress Without Limits.",
@@ -9,7 +206,18 @@ export const initialSiteContent: SiteContent = {
   aboutArrowMeaning: "La flèche n'est pas un simple élément décoratif. Elle est la signature visuelle de l'identité Forward One. Elle symbolise le mouvement perpétuel, la direction claire et l'excellence du numéro 1 qui ouvre la voie.",
   contactEmail: "contact@forwardone.cm",
   contactPhone: "+237 6 90 00 20 26",
-  contactAddress: "Avenue Akwa, Douala & Bastos, Yaoundé, Cameroun"
+  contactAddress: "Avenue Akwa, Douala & Bastos, Yaoundé, Cameroun",
+  heroSlides: initialHeroSlides,
+  serviceCategories: initialServiceCategories,
+  partners: initialPartners,
+  partnersBannerTitle: "Nos Partenaires & Marques de Confiance",
+  partnersBannerEnabled: true,
+  testimonials: initialTestimonials,
+  testimonialsTitle: "Ce Que Disent Nos Clients",
+  testimonialsSubtitle: "La satisfaction de nos partenaires est la preuve irréfutable de notre quête d’excellence.",
+  videoSectionTitle: "Forward One en Action",
+  videoSectionSubtitle: "Découvrez nos réalisations en vidéos : régies événements, tournages, shows lumière et créations web.",
+  videoCards: initialVideoCards
 };
 
 export const initialServices: ServiceItem[] = [
@@ -18,6 +226,10 @@ export const initialServices: ServiceItem[] = [
     id: "serv-mkt-1",
     title: "Stratégie de Marque & Branding",
     category: "Marketing Digital",
+    badge: "BRANDING PRO",
+    tagline: "Positionnement & Identité d'Excellence",
+    priceEstimate: "À partir de 350 000 FCFA",
+    popular: true,
     shortDescription: "Positionnement d'excellence, identité visuelle et charte de marque globale.",
     fullDescription: "Nous définissons une identité de marque puissante et mémorable qui capte l'attention et affirme votre leadership. De la création du logo à la rédaction de votre charte éditoriale, nous construisons un univers de marque sans limites.",
     iconName: "Compass",
@@ -26,8 +238,12 @@ export const initialServices: ServiceItem[] = [
   },
   {
     id: "serv-mkt-2",
-    title: "Développement Web & Applications Mobile",
+    title: "Développement Web & Mobile",
     category: "Marketing Digital",
+    badge: "WEB & APPLICATION",
+    tagline: "Plateformes sur-mesure & UX/UI Haute Performance",
+    priceEstimate: "À partir de 500 000 FCFA",
+    popular: true,
     shortDescription: "Plateformes web modernes, applications réactives, UX/UI haute performance.",
     fullDescription: "Conception de sites vitrines d'exception, plateformes web sur-mesure et applications mobiles ultra-fluides. Nous combinons esthétique raffinée, temps de chargement ultra-rapides et taux de conversion optimisés.",
     iconName: "Code2",
@@ -38,6 +254,10 @@ export const initialServices: ServiceItem[] = [
     id: "serv-mkt-3",
     title: "SEO & Référencement Stratégique",
     category: "Marketing Digital",
+    badge: "ACQUISITION ORGANIQUE",
+    tagline: "Visibilité N°1 sur les moteurs de recherche",
+    priceEstimate: "À partir de 250 000 FCFA",
+    popular: false,
     shortDescription: "Positionnez votre marque en première page sur les requêtes clés de votre marché.",
     fullDescription: "Propulsez votre visibilité organique grâce à un référencement technique rigoureux, une stratégie de contenu ciblée et une acquisition de liens d'autorité.",
     iconName: "TrendingUp",
@@ -48,6 +268,10 @@ export const initialServices: ServiceItem[] = [
     id: "serv-mkt-4",
     title: "Social Media & Acquisition Média",
     category: "Marketing Digital",
+    badge: "COMMUNITY & ADS",
+    tagline: "Engagement Communautaire & Campagnes SMM",
+    priceEstimate: "À partir de 300 000 FCFA",
+    popular: false,
     shortDescription: "Gestion de communautés, campagnes Ads ciblées et stratégie d'influence.",
     fullDescription: "Engagez vos audiences sur LinkedIn, Instagram, TikTok et YouTube avec des contenus créatifs à forte valeur ajoutée et des campagnes publicitaires rentables.",
     iconName: "Share2",

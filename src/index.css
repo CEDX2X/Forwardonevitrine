@@ -56,3 +56,20 @@
 .arrow-polygon-bottom {
   clip-path: polygon(0% 0%, 75% 0%, 100% 50%, 75% 100%, 0% 100%, 25% 50%);
 }
+
+/* Infinite Marquee Animation for Partners Banner */
+@keyframes partnerMarquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-partner-marquee {
+  display: flex;
+  width: max-content;
+  animation: partnerMarquee 32s linear infinite;
+}
+
+.animate-partner-marquee:hover {
+  animation-play-state: paused;
+}
+

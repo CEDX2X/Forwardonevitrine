@@ -7,6 +7,13 @@ import {
   ServiceItem,
   SiteContent
 } from './types';
+import {
+  getSiteContent,
+  getServices,
+  getProducts,
+  getPacks,
+  getArticles
+} from './lib/firebaseStore';
 import { initialSiteContent } from './data/initialData';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
@@ -72,19 +79,53 @@ export default function App() {
   // Fetch Public Site Data
   const fetchPublicData = async () => {
     try {
-      const [resContent, resServices, resProducts, resPacks, resArticles] = await Promise.all([
-        fetch('/api/site-content'),
-        fetch('/api/services'),
-        fetch('/api/products'),
-        fetch('/api/packs'),
-        fetch('/api/articles')
-      ]);
+      let contentData, servicesData, productsData, packsData, articlesData;
 
-      if (resContent.ok) setSiteContent(await resContent.json());
-      if (resServices.ok) setServices(await resServices.json());
-      if (resProducts.ok) setProducts(await resProducts.json());
-      if (resPacks.ok) setPacks(await resPacks.json());
-      if (resArticles.ok) setArticles(await resArticles.json());
+      try {
+        const resContent = await fetch('/api/site-content');
+        if (resContent.ok && resContent.headers.get('content-type')?.includes('application/json')) {
+          contentData = await resContent.json();
+        }
+      } catch (e) {}
+      if (!contentData) contentData = await getSiteContent();
+
+      try {
+        const resServices = await fetch('/api/services');
+        if (resServices.ok && resServices.headers.get('content-type')?.includes('application/json')) {
+          servicesData = await resServices.json();
+        }
+      } catch (e) {}
+      if (!servicesData) servicesData = await getServices();
+
+      try {
+        const resProducts = await fetch('/api/products');
+        if (resProducts.ok && resProducts.headers.get('content-type')?.includes('application/json')) {
+          productsData = await resProducts.json();
+        }
+      } catch (e) {}
+      if (!productsData) productsData = await getProducts();
+
+      try {
+        const resPacks = await fetch('/api/packs');
+        if (resPacks.ok && resPacks.headers.get('content-type')?.includes('application/json')) {
+          packsData = await resPacks.json();
+        }
+      } catch (e) {}
+      if (!packsData) packsData = await getPacks();
+
+      try {
+        const resArticles = await fetch('/api/articles');
+        if (resArticles.ok && resArticles.headers.get('content-type')?.includes('application/json')) {
+          articlesData = await resArticles.json();
+        }
+      } catch (e) {}
+      if (!articlesData) articlesData = await getArticles();
+
+      setSiteContent(contentData);
+      setServices(servicesData);
+      setProducts(productsData);
+      setPacks(packsData);
+      setArticles(articlesData);
     } catch (e) {
       console.error('Failed to fetch public site data:', e);
     }

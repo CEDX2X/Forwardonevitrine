@@ -18,6 +18,16 @@ import {
   VideoCardItem
 } from '../../types';
 import { initialServiceCategories, initialPartners, initialTestimonials, initialVideoCards } from '../../data/initialData';
+import {
+  getSiteContent,
+  getServices,
+  getProducts,
+  getPacks,
+  getArticles,
+  getComments,
+  getDevis,
+  getPreReservations
+} from '../../lib/firebaseStore';
 import { ForwardOneLogo } from '../ForwardOneLogo';
 import { PartnersBanner } from '../PartnersBanner';
 import {
@@ -429,43 +439,106 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const loadAllData = async () => {
     setIsLoading(true);
     try {
-      const [
-        resStats,
-        resContent,
-        resServices,
-        resArticles,
-        resProducts,
-        resPacks,
-        resComments,
-        resDevis,
-        resReservations
-      ] = await Promise.all([
-        fetch('/api/admin/stats', { headers: fetchHeaders }),
-        fetch('/api/site-content'),
-        fetch('/api/services'),
-        fetch('/api/articles', { headers: fetchHeaders }),
-        fetch('/api/products'),
-        fetch('/api/packs'),
-        fetch('/api/comments', { headers: fetchHeaders }),
-        fetch('/api/devis', { headers: fetchHeaders }),
-        fetch('/api/prereservations', { headers: fetchHeaders })
-      ]);
+      let statsData, contentData, servicesData, articlesData, productsData, packsData, commentsData, devisData, reservationsData;
 
-      if (resStats.ok) setStats(await resStats.json());
-      if (resContent.ok) {
-        const contentData = await resContent.json();
-        if (!contentData.serviceCategories || contentData.serviceCategories.length === 0) {
-          contentData.serviceCategories = initialServiceCategories;
+      try {
+        const resStats = await fetch('/api/admin/stats', { headers: fetchHeaders });
+        if (resStats.ok && resStats.headers.get('content-type')?.includes('application/json')) {
+          statsData = await resStats.json();
         }
-        setSiteContent(contentData);
+      } catch (e) {}
+
+      try {
+        const resContent = await fetch('/api/site-content');
+        if (resContent.ok && resContent.headers.get('content-type')?.includes('application/json')) {
+          contentData = await resContent.json();
+        }
+      } catch (e) {}
+      if (!contentData) contentData = await getSiteContent();
+      if (!contentData.serviceCategories || contentData.serviceCategories.length === 0) {
+        contentData.serviceCategories = initialServiceCategories;
       }
-      if (resServices.ok) setServices(await resServices.json());
-      if (resArticles.ok) setArticles(await resArticles.json());
-      if (resProducts.ok) setProducts(await resProducts.json());
-      if (resPacks.ok) setPacks(await resPacks.json());
-      if (resComments.ok) setComments(await resComments.json());
-      if (resDevis.ok) setDevis(await resDevis.json());
-      if (resReservations.ok) setReservations(await resReservations.json());
+
+      try {
+        const resServices = await fetch('/api/services');
+        if (resServices.ok && resServices.headers.get('content-type')?.includes('application/json')) {
+          servicesData = await resServices.json();
+        }
+      } catch (e) {}
+      if (!servicesData) servicesData = await getServices();
+
+      try {
+        const resArticles = await fetch('/api/articles', { headers: fetchHeaders });
+        if (resArticles.ok && resArticles.headers.get('content-type')?.includes('application/json')) {
+          articlesData = await resArticles.json();
+        }
+      } catch (e) {}
+      if (!articlesData) articlesData = await getArticles();
+
+      try {
+        const resProducts = await fetch('/api/products');
+        if (resProducts.ok && resProducts.headers.get('content-type')?.includes('application/json')) {
+          productsData = await resProducts.json();
+        }
+      } catch (e) {}
+      if (!productsData) productsData = await getProducts();
+
+      try {
+        const resPacks = await fetch('/api/packs');
+        if (resPacks.ok && resPacks.headers.get('content-type')?.includes('application/json')) {
+          packsData = await resPacks.json();
+        }
+      } catch (e) {}
+      if (!packsData) packsData = await getPacks();
+
+      try {
+        const resComments = await fetch('/api/comments', { headers: fetchHeaders });
+        if (resComments.ok && resComments.headers.get('content-type')?.includes('application/json')) {
+          commentsData = await resComments.json();
+        }
+      } catch (e) {}
+      if (!commentsData) commentsData = await getComments();
+
+      try {
+        const resDevis = await fetch('/api/devis', { headers: fetchHeaders });
+        if (resDevis.ok && resDevis.headers.get('content-type')?.includes('application/json')) {
+          devisData = await resDevis.json();
+        }
+      } catch (e) {}
+      if (!devisData) devisData = await getDevis();
+
+      try {
+        const resReservations = await fetch('/api/prereservations', { headers: fetchHeaders });
+        if (resReservations.ok && resReservations.headers.get('content-type')?.includes('application/json')) {
+          reservationsData = await resReservations.json();
+        }
+      } catch (e) {}
+      if (!reservationsData) reservationsData = await getPreReservations();
+
+      if (!statsData) {
+        statsData = {
+          totalServices: servicesData.length,
+          totalProducts: productsData.length,
+          totalPacks: packsData.length,
+          totalArticles: articlesData.length,
+          totalQuotes: devisData.length,
+          pendingQuotes: devisData.filter((d: any) => d.status === 'pending').length,
+          totalReservations: reservationsData.length,
+          pendingReservations: reservationsData.filter((r: any) => r.status === 'pending').length,
+          totalComments: commentsData.length,
+          pendingComments: commentsData.filter((c: any) => c.status === 'pending').length
+        };
+      }
+
+      setStats(statsData);
+      setSiteContent(contentData);
+      setServices(servicesData);
+      setArticles(articlesData);
+      setProducts(productsData);
+      setPacks(packsData);
+      setComments(commentsData);
+      setDevis(devisData);
+      setReservations(reservationsData);
 
       onRefreshPublicData();
     } catch (e) {

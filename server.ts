@@ -1,7 +1,6 @@
 import express from "express";
 import fs from "fs";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 import {
   ArticleItem,
   CommentItem,
@@ -85,12 +84,16 @@ async function ensureInit() {
 // Trigger initialization in background on server boot
 ensureInit().catch(console.error);
 
-// Static uploads directory
+// Static uploads directory (safely wrapped for serverless read-only filesystems like Vercel)
 const UPLOADS_DIR = path.join(process.cwd(), "uploads");
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+try {
+  if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  }
+  app.use("/uploads", express.static(UPLOADS_DIR));
+} catch (err) {
+  console.log("Uploads directory notice: serverless read-only environment");
 }
-app.use("/uploads", express.static(UPLOADS_DIR));
 
 // Simple Admin Auth Token Check Helper
 const checkAdmin = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -152,7 +155,11 @@ const checkAdmin = async (req: express.Request, res: express.Response, next: exp
       const safeFileName = `upload_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${safeExt || "png"}`;
       const targetPath = path.join(UPLOADS_DIR, safeFileName);
 
-      fs.writeFileSync(targetPath, buffer);
+      try {
+        fs.writeFileSync(targetPath, buffer);
+      } catch (writeErr) {
+        console.log("File write skipped (serverless environment)");
+      }
       
       const dataUrl = `data:image/${safeExt || "png"};base64,${buffer.toString("base64")}`;
       res.json({ success: true, url: dataUrl });
@@ -733,6 +740,7 @@ Accédez au Back-Office pour valider la disponibilité et convertir en réservat
 
 async function startServer() {
   if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa"

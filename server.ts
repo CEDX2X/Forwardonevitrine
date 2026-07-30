@@ -747,6 +747,16 @@ Accédez au Back-Office pour valider la disponibilité et convertir en réservat
     res.status(404).setHeader("Content-Type", "application/xml; charset=utf-8").send("<?xml version=\"1.0\" encoding=\"UTF-8\"?><error>Sitemap non trouvé</error>");
   });
 
+  app.get("/sitemap.xsl", (_req, res) => {
+    res.setHeader("Content-Type", "application/xml; charset=utf-8");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    const xslPath = path.join(process.cwd(), "public", "sitemap.xsl");
+    if (fs.existsSync(xslPath)) {
+      return res.sendFile(xslPath);
+    }
+    res.status(404).send("Stylesheet non trouvé");
+  });
+
   // --- VITE MIDDLEWARE / PRODUCTION SERVING ---
 
   if (process.env.NODE_ENV !== "production") {

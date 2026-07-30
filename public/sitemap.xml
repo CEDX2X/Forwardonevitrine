@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <!-- Page d'Accueil Principale -->
   <url>
     <loc>https://forwardoneglobal.com/</loc>
     <lastmod>2026-07-30</lastmod>
@@ -9,11 +13,90 @@
     <image:image>
       <image:loc>https://forwardoneglobal.com/og-image.png</image:loc>
       <image:title>Forward One - Marketing Digital &amp; Logistique Événementielle au Cameroun</image:title>
-      <image:caption>Agence de référence à Douala et Yaoundé en communication digitale, régie technique, sonorisation et écrans géants LED.</image:caption>
+      <image:caption>Agence de référence à Douala et Yaoundé en stratégie digitale, régie technique, sonorisation pro et écrans géants LED.</image:caption>
     </image:image>
     <image:image>
       <image:loc>https://forwardoneglobal.com/og-logo.png</image:loc>
-      <image:title>Forward One Brand Logo</image:title>
+      <image:title>Forward One Logo Officiel</image:title>
     </image:image>
   </url>
+
+  <!-- Section Services & Prestations -->
+  <url>
+    <loc>https://forwardoneglobal.com/#services</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&amp;w=1200&amp;auto=format&amp;fit=crop</image:loc>
+      <image:title>Marketing Digital &amp; Communication de Marque</image:title>
+      <image:caption>Gestion de réseaux sociaux, campagnes publicitaires ciblées Meta/Google au Cameroun.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&amp;w=1200&amp;auto=format&amp;fit=crop</image:loc>
+      <image:title>Sonorisation Professionnelle &amp; Régie Technique</image:title>
+      <image:caption>Matériel de sonorisation haute puissance pour concerts, conférences et cérémonies.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1508997449629-303059a039c0?q=80&amp;w=1200&amp;auto=format&amp;fit=crop</image:loc>
+      <image:title>Location d'Écrans Géants LED Haute Résolution</image:title>
+      <image:caption>Écrans LED outdoor et indoor P2.5/P3.9 pour diffusion vidéo en direct.</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Section Catalogue Matériel en Location -->
+  <url>
+    <loc>https://forwardoneglobal.com/#catalogue</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&amp;w=1200&amp;auto=format&amp;fit=crop</image:loc>
+      <image:title>Catalogue Matériel Audiovisuel Cameroun</image:title>
+      <image:caption>Location de microphones sans fil Sennheiser, consoles de mixage numériques Behringer, lyres éclairage Beam.</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Section Formules & Packs Événementiels -->
+  <url>
+    <loc>https://forwardoneglobal.com/#packs</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&amp;w=1200&amp;auto=format&amp;fit=crop</image:loc>
+      <image:title>Packs Événementiels Clés en Main</image:title>
+      <image:caption>Offres tout-compris pour séminaires, mariages, concerts et galas d'entreprise à Douala et Yaoundé.</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Section Blog & Actualités -->
+  <url>
+    <loc>https://forwardoneglobal.com/#blog</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1432888622747-4eb9a8efeb07?q=80&amp;w=1200&amp;auto=format&amp;fit=crop</image:loc>
+      <image:title>Blog &amp; Actualités Marketing &amp; Événementiel</image:title>
+      <image:caption>Guides, tendances événementielles et conseils en communication digitale au Cameroun.</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Section À Propos & Vision -->
+  <url>
+    <loc>https://forwardoneglobal.com/#a-propos</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Section Contact & Agences (Douala & Yaoundé) -->
+  <url>
+    <loc>https://forwardoneglobal.com/#contact</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
 </urlset>

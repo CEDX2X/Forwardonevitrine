@@ -79,7 +79,9 @@ import {
   ExternalLink,
   Video,
   Star,
-  Play
+  Play,
+  RotateCcw,
+  AlertTriangle
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -88,151 +90,161 @@ interface AdminDashboardProps {
   onRefreshPublicData: () => void;
 }
 
-const FirebaseVercelPanel: React.FC<{
+const DatabaseResetPanel: React.FC<{
   adminToken: string;
   onResetSuccess: () => void;
   setStatusModal: (modal: any) => void;
-  setDeleteConfirm: (confirm: any) => void;
-}> = ({ adminToken, onResetSuccess, setStatusModal, setDeleteConfirm }) => {
-  const [config, setConfig] = useState<any>(null);
-  const [copied, setCopied] = useState(false);
+}> = ({ adminToken, onResetSuccess, setStatusModal }) => {
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
-  useEffect(() => {
-    fetch('/api/admin/firebase-config', {
-      headers: { 'Authorization': `Bearer ${adminToken}` }
-    })
-      .then((res) => res.json())
-      .then((data) => setConfig(data))
-      .catch((err) => console.error('Failed to load firebase config:', err));
-  }, [adminToken]);
-
-  const handleCopyEnv = () => {
-    if (!config?.envSnippet) return;
-    const envText = Object.entries(config.envSnippet)
-      .map(([k, v]) => `${k}="${v}"`)
-      .join('\n');
-    navigator.clipboard.writeText(envText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
-  };
-
-  const handleResetDb = () => {
-    setDeleteConfirm({
-      isOpen: true,
-      title: 'Vider & Réinitialiser la base de données',
-      message: 'ATTENTION : Cette action supprimera et réinitialisera toutes les collections Firestore avec les données par défaut. Voulez-vous continuer ?',
-      onConfirm: async () => {
-        setIsResetting(true);
-        try {
-          let resetDone = false;
-          try {
-            const res = await fetch('/api/admin/reset-db', {
-              method: 'POST',
-              headers: { 'Authorization': `Bearer ${adminToken}` }
-            });
-            if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
-              const data = await res.json();
-              if (data.success) resetDone = true;
-            }
-          } catch (e) {}
-
-          if (!resetDone) {
-            await resetAndReseedFirestore();
-          }
-
-          setStatusModal({
-            isOpen: true,
-            type: 'success',
-            title: 'Base réinitialisée !',
-            message: 'La base de données Firestore a été vidée et rechargée à neuf.'
-          });
-          onResetSuccess();
-        } catch (e: any) {
-          setStatusModal({
-            isOpen: true,
-            type: 'error',
-            title: 'Erreur',
-            message: e.message || 'Échec de la réinitialisation.'
-          });
-        } finally {
-          setIsResetting(false);
+  const handleExecuteReset = async () => {
+    setIsResetting(true);
+    try {
+      let resetDone = false;
+      try {
+        const res = await fetch('/api/admin/reset-db', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
+        if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+          const data = await res.json();
+          if (data.success) resetDone = true;
         }
+      } catch (e) {}
+
+      if (!resetDone) {
+        await resetAndReseedFirestore();
       }
-    });
+
+      setStatusModal({
+        isOpen: true,
+        type: 'success',
+        title: 'Base réinitialisée !',
+        message: 'La base de données Firestore a été vidée et rechargée à neuf avec les données usine.'
+      });
+      setShowConfirmModal(false);
+      onResetSuccess();
+    } catch (e: any) {
+      setStatusModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Erreur',
+        message: e.message || 'Échec de la réinitialisation de la base de données.'
+      });
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   return (
-    <div className="space-y-6 pt-4 border-t border-white/10">
-      {/* Vercel Environment Variables Card */}
-      <div className="p-5 rounded-2xl bg-[#141446] border border-[#6C68F4]/30 space-y-4 text-white">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="pt-4 border-t border-white/10">
+      {/* Clean & Simple Reset Card */}
+      <div className="p-5 rounded-2xl bg-[#141446] border border-white/10 space-y-4 text-white">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-[#6C68F4]/20 text-[#00C2C2]">
-              <Globe className="w-6 h-6" />
+            <div className="p-2.5 rounded-xl bg-rose-500/15 text-rose-400">
+              <RotateCcw className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-bold text-base text-white">Connexion Vercel & Firebase</h3>
-              <p className="text-xs text-slate-400">Variables d'environnement pour votre déploiement sur Vercel</p>
+              <h3 className="font-bold text-base text-white">Réinitialiser la Base de Données</h3>
+              <p className="text-xs text-slate-400">Restaurez l'ensemble des données aux paramètres d'usine par défaut.</p>
             </div>
           </div>
 
           <button
-            onClick={handleCopyEnv}
-            className="px-4 py-2 rounded-xl bg-[#6C68F4] hover:bg-[#5b57e0] text-xs font-bold text-white transition flex items-center gap-2 shrink-0 cursor-pointer"
+            type="button"
+            onClick={() => setShowConfirmModal(true)}
+            className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-bold text-white transition flex items-center gap-2 shrink-0 cursor-pointer shadow-lg shadow-rose-900/20"
           >
-            {copied ? <Check className="w-4 h-4 text-emerald-300" /> : <RefreshCw className="w-4 h-4" />}
-            <span>{copied ? 'Copié dans le presse-papier !' : 'Copier Variables Vercel (.env)'}</span>
+            <RotateCcw className="w-4 h-4" />
+            <span>Réinitialiser la Base</span>
           </button>
         </div>
+      </div>
 
-        {config?.envSnippet && (
-          <div className="bg-[#0b0b26] p-4 rounded-xl border border-white/10 overflow-x-auto text-[11px] font-mono text-slate-300 space-y-1">
-            {Object.entries(config.envSnippet).map(([k, v]) => (
-              <div key={k} className="flex gap-2">
-                <span className="text-[#00C2C2] font-semibold">{k}=</span>
-                <span className="text-emerald-400 font-mono">"{String(v)}"</span>
+      {/* Confirmation Modal Explaining Risks */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-lg p-6 rounded-2xl bg-[#141446] border border-rose-500/50 space-y-5 text-white shadow-2xl relative">
+            
+            {/* Header */}
+            <div className="flex items-start gap-3">
+              <div className="p-3 rounded-xl bg-rose-500/20 text-rose-400 shrink-0">
+                <AlertTriangle className="w-7 h-7 text-rose-400" />
               </div>
-            ))}
-          </div>
-        )}
-
-        <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-200 leading-relaxed">
-          <strong> Astuce Déploiement Vercel :</strong>
-          <ul className="list-disc list-inside mt-1 space-y-1 text-slate-300">
-            <li>Sur Vercel, allez dans <strong>Project Settings &gt; Environment Variables</strong>.</li>
-            <li>Collez les variables ci-dessus pour que votre site Vercel communique directement avec cette même base Firestore.</li>
-            <li>Dans la console Firebase, vérifiez que le domaine de votre site Vercel (ex: <code>mon-projet.vercel.app</code>) est autorisé.</li>
-          </ul>
-        </div>
-      </div>
-
-      {/* Wipe & Reset Database Card */}
-      <div className="p-5 rounded-2xl bg-rose-950/20 border border-rose-500/30 space-y-4 text-white">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-rose-500/20 text-rose-400">
-              <Trash2 className="w-6 h-6" />
+              <div className="space-y-1">
+                <h3 className="font-extrabold text-lg text-white">
+                  Avertissement : Réinitialisation Générale
+                </h3>
+                <p className="text-xs text-rose-300 font-medium">
+                  Cette opération entraînera la remise à zéro complète de la base de données.
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-bold text-base text-rose-200">Réinitialiser / Vider la Base de Données</h3>
-              <p className="text-xs text-rose-300/70">Wipe complet et rechargement des collections Firestore</p>
-            </div>
-          </div>
 
-          <button
-            onClick={handleResetDb}
-            disabled={isResetting}
-            className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-bold text-white transition flex items-center gap-2 shrink-0 cursor-pointer disabled:opacity-50"
-          >
-            <Trash2 className="w-4 h-4" />
-            <span>{isResetting ? 'Réinitialisation...' : 'Vider & Réinitialiser la Base Firestore'}</span>
-          </button>
+            {/* Explanation & Risks */}
+            <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-500/30 text-xs space-y-3 leading-relaxed text-slate-200">
+              <p className="font-bold text-rose-200 text-sm">
+                Veuillez lire attentivement les risques avant de confirmer :
+              </p>
+              
+              <ul className="space-y-2 text-slate-300">
+                <li className="flex items-start gap-2">
+                  <span className="text-rose-400 font-bold shrink-0">•</span>
+                  <span>
+                    <strong className="text-white">Effacement total des données :</strong> Tous les articles de blog, services, produits, packs, demandes de devis, pré-réservations, commentaires et partenaires enregistrés seront réinitialisés.
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-rose-400 font-bold shrink-0">•</span>
+                  <span>
+                    <strong className="text-white">Restauration des valeurs d'usine :</strong> Le contenu du site web sera réensemencé avec le jeu de données initial par défaut.
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-rose-400 font-bold shrink-0">•</span>
+                  <span>
+                    <strong className="text-white">Action irréversible :</strong> Vos modifications et ajouts récents ne pourront pas être récupérés.
+                  </span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row justify-end gap-3 pt-2 border-t border-white/10">
+              <button
+                type="button"
+                disabled={isResetting}
+                onClick={() => setShowConfirmModal(false)}
+                className="px-5 py-2.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/15 text-slate-300 transition cursor-pointer disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              
+              <button
+                type="button"
+                disabled={isResetting}
+                onClick={handleExecuteReset}
+                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white transition flex items-center justify-center gap-2 shadow-lg shadow-rose-600/30 cursor-pointer disabled:opacity-50"
+              >
+                {isResetting ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Réinitialisation en cours...</span>
+                  </>
+                ) : (
+                  <>
+                    <RotateCcw className="w-4 h-4" />
+                    <span>Oui, Réinitialiser la Base</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+          </div>
         </div>
-        <p className="text-xs text-slate-400 leading-relaxed">
-          Si vous avez des erreurs de synchronisation ou des anciennes données corrompues, vous pouvez purger les collections Firestore et les réinitialiser immédiatement avec le jeu de données par défaut.
-        </p>
-      </div>
+      )}
     </div>
   );
 };
@@ -2471,15 +2483,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {activeTab === 'settings' && (
             <div className="space-y-6 animate-fade-in min-w-0">
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white">Paramètres Administrateur & Connexion Vercel / Firebase</h2>
-                <p className="text-xs text-slate-400 mt-1">Gérez la sécurité du Back-Office, la réinitialisation de la base de données et la synchronisation Vercel.</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-white">Paramètres Administrateur & Base de Données</h2>
+                <p className="text-xs text-slate-400 mt-1">Gérez le mot de passe d'accès au Back-Office et la réinitialisation de la base de données.</p>
               </div>
               <AdminPasswordForm adminToken={adminToken} />
-              <FirebaseVercelPanel
+              <DatabaseResetPanel
                 adminToken={adminToken}
                 onResetSuccess={loadAllData}
                 setStatusModal={setStatusModal}
-                setDeleteConfirm={setDeleteConfirm}
               />
             </div>
           )}

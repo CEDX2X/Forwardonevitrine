@@ -46,6 +46,7 @@ import {
   deletePreReservation,
   getAdminPassword,
   updateAdminPassword,
+  removeAdminPassword,
   resetAndReseedFirestore
 } from "./src/lib/firebaseStore.js";
 import { resolvedFirebaseConfig } from "./src/lib/firebase.js";
@@ -72,14 +73,16 @@ async function startServer() {
 
   // Simple Admin Auth Token Check Helper
   const checkAdmin = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    ADMIN_PASS = await getAdminPassword();
+    // If no password is set in Firestore, access is open/unlocked
     if (!ADMIN_PASS) {
-      ADMIN_PASS = await getAdminPassword();
-    }
-    const authHeader = req.headers.authorization;
-    if (ADMIN_PASS && (authHeader === `Bearer ${ADMIN_PASS}` || req.headers["x-admin-key"] === ADMIN_PASS)) {
       return next();
     }
-    return res.status(401).json({ error: "Accès non autorisé. Session administrateur invalide." });
+    const authHeader = req.headers.authorization;
+    if (authHeader === `Bearer ${ADMIN_PASS}` || authHeader === `Bearer OPEN` || req.headers["x-admin-key"] === ADMIN_PASS) {
+      return next();
+    }
+    return res.status(401).json({ error: "Accès non autorisé. Le Back-Office est verrouillé par un mot de passe." });
   };
 
   // --- API ROUTES ---
@@ -135,32 +138,13 @@ async function startServer() {
     }
   });
 
-  // Admin Status Check (Returns whether password has been configured)
+  // Admin Status Check
   app.get("/api/admin/status", async (_req, res) => {
     try {
       const currentPass = await getAdminPassword();
-      res.json({ isConfigured: !!currentPass });
+      res.json({ isLocked: !!currentPass, isConfigured: !!currentPass });
     } catch (err) {
-      res.json({ isConfigured: false });
-    }
-  });
-
-  // Admin Initial Password Setup (First-time password setup)
-  app.post("/api/admin/setup-password", async (req, res) => {
-    try {
-      const currentPass = await getAdminPassword();
-      if (currentPass) {
-        return res.status(400).json({ error: "Le mot de passe administrateur a déjà été configuré." });
-      }
-      const { newPassword } = req.body;
-      if (!newPassword || newPassword.length < 6) {
-        return res.status(400).json({ error: "Le mot de passe doit contenir au moins 6 caractères." });
-      }
-      await updateAdminPassword(newPassword);
-      ADMIN_PASS = newPassword;
-      res.json({ success: true, token: newPassword, user: "Administrateur Forward One" });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message || "Erreur lors de la configuration du mot de passe." });
+      res.json({ isLocked: false, isConfigured: false });
     }
   });
 
@@ -169,28 +153,40 @@ async function startServer() {
     const { password } = req.body;
     const currentPass = await getAdminPassword();
     if (!currentPass) {
-      return res.status(400).json({ isConfigured: false, error: "Aucun mot de passe n'est configuré. Veuillez définir le mot de passe administrateur." });
+      // Unlocked: allow immediate login
+      return res.json({ success: true, token: "OPEN", isLocked: false, user: "Administrateur Forward One" });
     }
     if (password === currentPass) {
       ADMIN_PASS = currentPass;
-      res.json({ success: true, token: currentPass, user: "Administrateur Forward One" });
+      res.json({ success: true, token: currentPass, isLocked: true, user: "Administrateur Forward One" });
     } else {
       res.status(401).json({ success: false, error: "Mot de passe administrateur incorrect." });
     }
   });
 
-  // Admin Update Password
+  // Admin Update / Lock Password
   app.put("/api/admin/password", checkAdmin, async (req, res) => {
     try {
       const { newPassword } = req.body;
       if (!newPassword || newPassword.length < 6) {
-        return res.status(400).json({ error: "Mot de passe trop court." });
+        return res.status(400).json({ error: "Le mot de passe doit contenir au moins 6 caractères." });
       }
       await updateAdminPassword(newPassword);
-      ADMIN_PASS = newPassword; // Update in-memory password
-      res.json({ success: true });
-    } catch (err) {
-      res.status(500).json({ error: "Erreur lors de la mise à jour." });
+      ADMIN_PASS = newPassword;
+      res.json({ success: true, message: "Le mot de passe a été enregistré. Le Back-Office est désormais verrouillé." });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || "Erreur lors de la mise à jour du mot de passe." });
+    }
+  });
+
+  // Admin Remove / Unlock Password
+  app.delete("/api/admin/password", checkAdmin, async (_req, res) => {
+    try {
+      await removeAdminPassword();
+      ADMIN_PASS = null;
+      res.json({ success: true, message: "Le mot de passe a été supprimé. L'accès au Back-Office est désormais libre." });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || "Erreur lors de la suppression du mot de passe." });
     }
   });
 

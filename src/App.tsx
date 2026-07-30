@@ -106,6 +106,22 @@ export default function App() {
     setIsPreReservationModalOpen(true);
   };
 
+  const handleOpenAdminTrigger = async () => {
+    try {
+      const res = await fetch('/api/admin/status');
+      if (res.ok) {
+        const data = await res.json();
+        if (!data.isLocked) {
+          handleAdminLoginSuccess('OPEN');
+          return;
+        }
+      }
+    } catch (e) {
+      console.error('Admin status check error:', e);
+    }
+    setIsAdminLoginOpen(true);
+  };
+
   const handleAdminLoginSuccess = (token: string) => {
     setAdminToken(token);
     localStorage.setItem('forwardone_admin_token', token);
@@ -144,7 +160,7 @@ export default function App() {
           setIsDevisModalOpen(true);
         }}
         onOpenPreReservation={() => handleOpenPreReservationWithProduct()}
-        onOpenAdminLogin={() => setIsAdminLoginOpen(true)}
+        onOpenAdminLogin={handleOpenAdminTrigger}
       />
 
       {/* Main Page Content Area */}

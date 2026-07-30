@@ -68,6 +68,14 @@ export async function updateAdminPassword(password: string): Promise<void> {
   }, { merge: true });
 }
 
+export async function removeAdminPassword(): Promise<void> {
+  await setDoc(doc(db, COLLECTIONS.ADMIN_SETTINGS, "password"), {
+    password: null,
+    isConfigured: false,
+    updatedAt: new Date().toISOString()
+  });
+}
+
 /**
  * Seed Firebase Firestore with initial data if collections are empty.
  */

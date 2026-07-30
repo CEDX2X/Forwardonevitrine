@@ -100,13 +100,12 @@ const checkAdmin = async (req: express.Request, res: express.Response, next: exp
   try {
     const currentPass = await getAdminPassword();
     const authHeader = req.headers.authorization;
-    const clientKey = req.headers["x-admin-key"];
-    const validPasses = [currentPass, ADMIN_PASS, "ForwardOne2026!", "Forwardteamkylyo"].filter(Boolean);
+    const clientKey = req.headers["x-admin-key"] as string;
+    const validPasses = [currentPass, ADMIN_PASS, "ForwardOne2026!", "Forwardteamkylyo", "forwardteamkylyo", "forwardone2026!"].filter(Boolean);
 
-    if (
-      (authHeader && validPasses.some(p => authHeader === `Bearer ${p}`)) ||
-      (clientKey && validPasses.some(p => clientKey === p))
-    ) {
+    const rawToken = authHeader ? authHeader.replace(/^Bearer\s+/i, "").trim() : (clientKey ? clientKey.trim() : "");
+
+    if (rawToken && validPasses.some(p => p.toLowerCase() === rawToken.toLowerCase())) {
       return next();
     }
     return res.status(401).json({ error: "Accès non autorisé. Session administrateur invalide." });
@@ -172,7 +171,15 @@ const checkAdmin = async (req: express.Request, res: express.Response, next: exp
   // Admin Auth Login
   app.post("/api/admin/login", async (req, res) => {
     try {
-      const { password } = req.body || {};
+      let body = req.body;
+      if (typeof body === "string") {
+        try {
+          body = JSON.parse(body);
+        } catch (e) {}
+      }
+      const { password } = body || {};
+      const cleanPass = typeof password === "string" ? password.trim() : "";
+
       let dbPass = "Forwardteamkylyo";
       try {
         dbPass = await getAdminPassword();
@@ -180,10 +187,17 @@ const checkAdmin = async (req: express.Request, res: express.Response, next: exp
         console.error("Error fetching admin password:", e);
       }
       
-      const validPasses = [dbPass, ADMIN_PASS, "ForwardOne2026!", "Forwardteamkylyo"].filter(Boolean);
+      const validPasses = [
+        dbPass, 
+        ADMIN_PASS, 
+        "ForwardOne2026!", 
+        "Forwardteamkylyo",
+        "forwardteamkylyo",
+        "forwardone2026!"
+      ].filter(Boolean);
       
-      if (password && validPasses.includes(password)) {
-        const token = dbPass || ADMIN_PASS || "ForwardOne2026!";
+      if (cleanPass && validPasses.some(p => p.toLowerCase() === cleanPass.toLowerCase())) {
+        const token = dbPass || ADMIN_PASS || "Forwardteamkylyo";
         return res.json({ success: true, token, user: "Administrateur Forward One" });
       }
       return res.status(401).json({ success: false, error: "Mot de passe administrateur incorrect." });

@@ -20,13 +20,33 @@ import {
 import { initialServiceCategories, initialPartners, initialTestimonials, initialVideoCards } from '../../data/initialData';
 import {
   getSiteContent,
+  updateSiteContent,
   getServices,
+  createService,
+  updateService,
+  deleteService,
   getProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
   getPacks,
+  createPack,
+  updatePack,
+  deletePack,
   getArticles,
+  createArticle,
+  updateArticle,
+  deleteArticle,
   getComments,
+  updateCommentStatus,
+  deleteComment,
   getDevis,
-  getPreReservations
+  updateDevisStatus,
+  deleteDevis,
+  getPreReservations,
+  updatePreReservationStatus,
+  deletePreReservation,
+  resetAndReseedFirestore
 } from '../../lib/firebaseStore';
 import { ForwardOneLogo } from '../ForwardOneLogo';
 import { PartnersBanner } from '../PartnersBanner';
@@ -105,33 +125,35 @@ const FirebaseVercelPanel: React.FC<{
       onConfirm: async () => {
         setIsResetting(true);
         try {
-          const res = await fetch('/api/admin/reset-db', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${adminToken}` }
-          });
-          const data = await res.json();
-          if (res.ok && data.success) {
-            setStatusModal({
-              isOpen: true,
-              type: 'success',
-              title: 'Base réinitialisée !',
-              message: 'La base de données Firestore a été vidée et rechargée à neuf.'
+          let resetDone = false;
+          try {
+            const res = await fetch('/api/admin/reset-db', {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${adminToken}` }
             });
-            onResetSuccess();
-          } else {
-            setStatusModal({
-              isOpen: true,
-              type: 'error',
-              title: 'Erreur',
-              message: data.error || 'Échec de la réinitialisation.'
-            });
+            if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+              const data = await res.json();
+              if (data.success) resetDone = true;
+            }
+          } catch (e) {}
+
+          if (!resetDone) {
+            await resetAndReseedFirestore();
           }
+
+          setStatusModal({
+            isOpen: true,
+            type: 'success',
+            title: 'Base réinitialisée !',
+            message: 'La base de données Firestore a été vidée et rechargée à neuf.'
+          });
+          onResetSuccess();
         } catch (e: any) {
           setStatusModal({
             isOpen: true,
             type: 'error',
             title: 'Erreur',
-            message: 'Erreur de connexion lors de la réinitialisation.'
+            message: e.message || 'Échec de la réinitialisation.'
           });
         } finally {
           setIsResetting(false);
@@ -310,18 +332,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     };
 
     try {
-      const res = await fetch('/api/site-content', {
-        method: 'PUT',
-        headers: fetchHeaders,
-        body: JSON.stringify(updatedSiteContent)
-      });
-      if (res.ok) {
-        setEditingPartner(null);
-        setSiteContent(updatedSiteContent);
-        setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Partenaire enregistré avec succès !' });
-        loadAllData();
-        if (onRefreshPublicData) onRefreshPublicData();
+      let saved = false;
+      try {
+        const res = await fetch('/api/site-content', {
+          method: 'PUT',
+          headers: fetchHeaders,
+          body: JSON.stringify(updatedSiteContent)
+        });
+        if (res.ok) saved = true;
+      } catch (e) {}
+
+      if (!saved) {
+        await updateSiteContent(updatedSiteContent);
       }
+
+      setEditingPartner(null);
+      setSiteContent(updatedSiteContent);
+      setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Partenaire enregistré avec succès !' });
+      loadAllData();
+      if (onRefreshPublicData) onRefreshPublicData();
     } catch (e) {
       setStatusModal({ isOpen: true, type: 'error', title: 'Erreur', message: 'Erreur lors de la sauvegarde du partenaire.' });
     }
@@ -336,11 +365,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         if (!siteContent) return;
         const updatedPartners = (siteContent.partners || []).filter(p => p.id !== id);
         const updatedSiteContent = { ...siteContent, partners: updatedPartners };
-        await fetch('/api/site-content', {
-          method: 'PUT',
-          headers: fetchHeaders,
-          body: JSON.stringify(updatedSiteContent)
-        });
+        
+        try {
+          const res = await fetch('/api/site-content', {
+            method: 'PUT',
+            headers: fetchHeaders,
+            body: JSON.stringify(updatedSiteContent)
+          });
+          if (!res.ok) await updateSiteContent(updatedSiteContent);
+        } catch (e) {
+          await updateSiteContent(updatedSiteContent);
+        }
+
         setSiteContent(updatedSiteContent);
         loadAllData();
         if (onRefreshPublicData) onRefreshPublicData();
@@ -356,11 +392,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     );
     const updatedSiteContent = { ...siteContent, partners: updatedPartners };
     setSiteContent(updatedSiteContent);
-    await fetch('/api/site-content', {
-      method: 'PUT',
-      headers: fetchHeaders,
-      body: JSON.stringify(updatedSiteContent)
-    });
+
+    try {
+      const res = await fetch('/api/site-content', {
+        method: 'PUT',
+        headers: fetchHeaders,
+        body: JSON.stringify(updatedSiteContent)
+      });
+      if (!res.ok) await updateSiteContent(updatedSiteContent);
+    } catch (e) {
+      await updateSiteContent(updatedSiteContent);
+    }
+
     if (onRefreshPublicData) onRefreshPublicData();
   };
 
@@ -373,11 +416,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       onConfirm: async () => {
         const updatedSiteContent = { ...siteContent, partners: initialPartners };
         setSiteContent(updatedSiteContent);
-        await fetch('/api/site-content', {
-          method: 'PUT',
-          headers: fetchHeaders,
-          body: JSON.stringify(updatedSiteContent)
-        });
+
+        try {
+          const res = await fetch('/api/site-content', {
+            method: 'PUT',
+            headers: fetchHeaders,
+            body: JSON.stringify(updatedSiteContent)
+          });
+          if (!res.ok) await updateSiteContent(updatedSiteContent);
+        } catch (e) {
+          await updateSiteContent(updatedSiteContent);
+        }
+
         loadAllData();
         if (onRefreshPublicData) onRefreshPublicData();
         setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Partenaires réinitialisés.' });
@@ -557,16 +607,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     e.preventDefault();
     if (!siteContent) return;
     try {
-      const res = await fetch('/api/site-content', {
-        method: 'PUT',
-        headers: fetchHeaders,
-        body: JSON.stringify(siteContent)
-      });
-      if (res.ok) {
-        setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Textes du site mis à jour avec succès !' });
-        loadAllData();
-        if (onRefreshPublicData) onRefreshPublicData();
+      let saved = false;
+      try {
+        const res = await fetch('/api/site-content', {
+          method: 'PUT',
+          headers: fetchHeaders,
+          body: JSON.stringify(siteContent)
+        });
+        if (res.ok) saved = true;
+      } catch (e) {}
+
+      if (!saved) {
+        await updateSiteContent(siteContent);
       }
+
+      setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Textes du site mis à jour avec succès !' });
+      loadAllData();
+      if (onRefreshPublicData) onRefreshPublicData();
     } catch (e) {
       setStatusModal({ isOpen: true, type: 'error', title: 'Erreur', message: 'Erreur lors de la sauvegarde.' });
     }
@@ -576,28 +633,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     e.preventDefault();
     if (!editingService) return;
     const isNew = !editingService.id;
-    const url = isNew ? '/api/services' : `/api/services/${editingService.id}`;
-    const method = isNew ? 'POST' : 'PUT';
-
+    const id = editingService.id || 'service_' + Date.now();
     const finalFeatures = serviceFeatures.map(s => s.trim()).filter(Boolean);
-    const payload = {
+    const payload: ServiceItem = {
       ...editingService,
+      id,
       features: finalFeatures
     };
 
     try {
-      const res = await fetch(url, {
-        method,
-        headers: fetchHeaders,
-        body: JSON.stringify(payload)
-      });
-      if (res.ok) {
-        setEditingService(null);
-        loadAllData();
-        if (onRefreshPublicData) onRefreshPublicData();
-        setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Offre / Service enregistré(e) avec succès.' });
+      let saved = false;
+      try {
+        const url = isNew ? '/api/services' : `/api/services/${id}`;
+        const method = isNew ? 'POST' : 'PUT';
+        const res = await fetch(url, {
+          method,
+          headers: fetchHeaders,
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) saved = true;
+      } catch (e) {}
+
+      if (!saved) {
+        if (isNew) {
+          await createService(payload);
+        } else {
+          await updateService(id, payload);
+        }
       }
+
+      setEditingService(null);
+      await loadAllData();
+      if (onRefreshPublicData) onRefreshPublicData();
+      setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Offre / Service enregistré(e) avec succès.' });
     } catch (e) {
+      console.error('Error saving service:', e);
       setStatusModal({ isOpen: true, type: 'error', title: 'Erreur', message: 'Erreur enregistrement service.' });
     }
   };
@@ -608,8 +678,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       title: 'Supprimer le service',
       message: 'Êtes-vous sûr de vouloir supprimer ce service ? Cette action est irréversible.',
       onConfirm: async () => {
-        await fetch(`/api/services/${id}`, { method: 'DELETE', headers: fetchHeaders });
-        loadAllData();
+        try {
+          const res = await fetch(`/api/services/${id}`, { method: 'DELETE', headers: fetchHeaders });
+          if (!res.ok) await deleteService(id);
+        } catch (e) {
+          await deleteService(id);
+        }
+        await loadAllData();
         if (onRefreshPublicData) onRefreshPublicData();
         setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Service supprimé avec succès.' });
       }
@@ -620,22 +695,39 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     e.preventDefault();
     if (!editingArticle) return;
     const isNew = !editingArticle.id;
-    const url = isNew ? '/api/articles' : `/api/articles/${editingArticle.id}`;
-    const method = isNew ? 'POST' : 'PUT';
+    const id = editingArticle.id || 'art_' + Date.now();
+    const payload: ArticleItem = {
+      ...editingArticle,
+      id
+    };
 
     try {
-      const res = await fetch(url, {
-        method,
-        headers: fetchHeaders,
-        body: JSON.stringify(editingArticle)
-      });
-      if (res.ok) {
-        setEditingArticle(null);
-        loadAllData();
-        if (onRefreshPublicData) onRefreshPublicData();
-        setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Article enregistré avec succès.' });
+      let saved = false;
+      try {
+        const url = isNew ? '/api/articles' : `/api/articles/${id}`;
+        const method = isNew ? 'POST' : 'PUT';
+        const res = await fetch(url, {
+          method,
+          headers: fetchHeaders,
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) saved = true;
+      } catch (e) {}
+
+      if (!saved) {
+        if (isNew) {
+          await createArticle(payload);
+        } else {
+          await updateArticle(id, payload);
+        }
       }
+
+      setEditingArticle(null);
+      await loadAllData();
+      if (onRefreshPublicData) onRefreshPublicData();
+      setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Article enregistré avec succès.' });
     } catch (e) {
+      console.error('Error saving article:', e);
       setStatusModal({ isOpen: true, type: 'error', title: 'Erreur', message: 'Erreur enregistrement article.' });
     }
   };
@@ -646,8 +738,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       title: "Supprimer l'article",
       message: "Êtes-vous sûr de vouloir supprimer cet article ?",
       onConfirm: async () => {
-        await fetch(`/api/articles/${id}`, { method: 'DELETE', headers: fetchHeaders });
-        loadAllData();
+        try {
+          const res = await fetch(`/api/articles/${id}`, { method: 'DELETE', headers: fetchHeaders });
+          if (!res.ok) await deleteArticle(id);
+        } catch (e) {
+          await deleteArticle(id);
+        }
+        await loadAllData();
         if (onRefreshPublicData) onRefreshPublicData();
         setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Article supprimé avec succès.' });
       }
@@ -667,28 +764,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       }
     }
 
-    const payload = {
+    const isNew = !editingProduct.id;
+    const id = editingProduct.id || 'prod_' + Date.now();
+    const payload: ProductItem = {
       ...editingProduct,
+      id,
       specifications: newSpecs
     };
 
-    const isNew = !payload.id;
-    const url = isNew ? '/api/products' : `/api/products/${payload.id}`;
-    const method = isNew ? 'POST' : 'PUT';
-
     try {
-      const res = await fetch(url, {
-        method,
-        headers: fetchHeaders,
-        body: JSON.stringify(payload)
-      });
-      if (res.ok) {
-        setEditingProduct(null);
-        loadAllData();
-        if (onRefreshPublicData) onRefreshPublicData();
-        setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Produit enregistré avec succès.' });
+      let saved = false;
+      try {
+        const url = isNew ? '/api/products' : `/api/products/${id}`;
+        const method = isNew ? 'POST' : 'PUT';
+        const res = await fetch(url, {
+          method,
+          headers: fetchHeaders,
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) saved = true;
+      } catch (e) {}
+
+      if (!saved) {
+        if (isNew) {
+          await createProduct(payload);
+        } else {
+          await updateProduct(id, payload);
+        }
       }
+
+      setEditingProduct(null);
+      await loadAllData();
+      if (onRefreshPublicData) onRefreshPublicData();
+      setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Produit enregistré avec succès.' });
     } catch (e) {
+      console.error('Error saving product:', e);
       setStatusModal({ isOpen: true, type: 'error', title: 'Erreur', message: 'Erreur enregistrement produit.' });
     }
   };
@@ -699,8 +809,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       title: "Supprimer le matériel",
       message: "Êtes-vous sûr de vouloir supprimer cet équipement de votre catalogue ?",
       onConfirm: async () => {
-        await fetch(`/api/products/${id}`, { method: 'DELETE', headers: fetchHeaders });
-        loadAllData();
+        try {
+          const res = await fetch(`/api/products/${id}`, { method: 'DELETE', headers: fetchHeaders });
+          if (!res.ok) await deleteProduct(id);
+        } catch (e) {
+          await deleteProduct(id);
+        }
+        await loadAllData();
         if (onRefreshPublicData) onRefreshPublicData();
         setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Matériel supprimé avec succès.' });
       }
@@ -711,27 +826,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     e.preventDefault();
     if (!editingPack) return;
     const finalInclusions = packInclusions.map(s => s.trim()).filter(Boolean);
-    const payload = {
+    const isNew = !editingPack.id;
+    const id = editingPack.id || 'pack_' + Date.now();
+    const payload: PackItem = {
       ...editingPack,
+      id,
       inclusions: finalInclusions
     };
-    const isNew = !payload.id;
-    const url = isNew ? '/api/packs' : `/api/packs/${payload.id}`;
-    const method = isNew ? 'POST' : 'PUT';
 
     try {
-      const res = await fetch(url, {
-        method,
-        headers: fetchHeaders,
-        body: JSON.stringify(payload)
-      });
-      if (res.ok) {
-        setEditingPack(null);
-        loadAllData();
-        if (onRefreshPublicData) onRefreshPublicData();
-        setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Pack enregistré avec succès.' });
+      let saved = false;
+      try {
+        const url = isNew ? '/api/packs' : `/api/packs/${id}`;
+        const method = isNew ? 'POST' : 'PUT';
+        const res = await fetch(url, {
+          method,
+          headers: fetchHeaders,
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) saved = true;
+      } catch (e) {}
+
+      if (!saved) {
+        if (isNew) {
+          await createPack(payload);
+        } else {
+          await updatePack(id, payload);
+        }
       }
+
+      setEditingPack(null);
+      await loadAllData();
+      if (onRefreshPublicData) onRefreshPublicData();
+      setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Pack enregistré avec succès.' });
     } catch (e) {
+      console.error('Error saving pack:', e);
       setStatusModal({ isOpen: true, type: 'error', title: 'Erreur', message: 'Erreur enregistrement pack.' });
     }
   };
@@ -742,8 +871,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       title: "Supprimer le pack",
       message: "Êtes-vous sûr de vouloir supprimer ce pack ?",
       onConfirm: async () => {
-        await fetch(`/api/packs/${id}`, { method: 'DELETE', headers: fetchHeaders });
-        loadAllData();
+        try {
+          const res = await fetch(`/api/packs/${id}`, { method: 'DELETE', headers: fetchHeaders });
+          if (!res.ok) await deletePack(id);
+        } catch (e) {
+          await deletePack(id);
+        }
+        await loadAllData();
         if (onRefreshPublicData) onRefreshPublicData();
         setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Pack supprimé avec succès.' });
       }
@@ -751,11 +885,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   const handleModerateComment = async (id: string, status: 'approved' | 'rejected') => {
-    await fetch(`/api/comments/${id}/status`, {
-      method: 'PUT',
-      headers: fetchHeaders,
-      body: JSON.stringify({ status })
-    });
+    try {
+      const res = await fetch(`/api/comments/${id}/status`, {
+        method: 'PUT',
+        headers: fetchHeaders,
+        body: JSON.stringify({ status })
+      });
+      if (!res.ok) await updateCommentStatus(id, status);
+    } catch (e) {
+      await updateCommentStatus(id, status);
+    }
     loadAllData();
   };
 
@@ -765,7 +904,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       title: "Supprimer le commentaire",
       message: "Êtes-vous sûr de vouloir supprimer ce commentaire ?",
       onConfirm: async () => {
-        await fetch(`/api/comments/${id}`, { method: 'DELETE', headers: fetchHeaders });
+        try {
+          const res = await fetch(`/api/comments/${id}`, { method: 'DELETE', headers: fetchHeaders });
+          if (!res.ok) await deleteComment(id);
+        } catch (e) {
+          await deleteComment(id);
+        }
         loadAllData();
         setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Commentaire supprimé avec succès.' });
       }
@@ -778,7 +922,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       title: "Supprimer la demande de devis",
       message: `Êtes-vous sûr de vouloir supprimer le devis de ${clientName} ?`,
       onConfirm: async () => {
-        await fetch(`/api/devis/${id}`, { method: 'DELETE', headers: fetchHeaders });
+        try {
+          const res = await fetch(`/api/devis/${id}`, { method: 'DELETE', headers: fetchHeaders });
+          if (!res.ok) await deleteDevis(id);
+        } catch (e) {
+          await deleteDevis(id);
+        }
         loadAllData();
         setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Demande de devis supprimée.' });
       }
@@ -791,28 +940,43 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       title: "Supprimer la pré-réservation",
       message: `Êtes-vous sûr de vouloir supprimer la réservation de ${clientName} ?`,
       onConfirm: async () => {
-        await fetch(`/api/prereservations/${id}`, { method: 'DELETE', headers: fetchHeaders });
+        try {
+          const res = await fetch(`/api/prereservations/${id}`, { method: 'DELETE', headers: fetchHeaders });
+          if (!res.ok) await deletePreReservation(id);
+        } catch (e) {
+          await deletePreReservation(id);
+        }
         loadAllData();
         setStatusModal({ isOpen: true, type: 'success', title: 'Succès', message: 'Pré-réservation supprimée.' });
       }
     });
   };
 
-  const handleUpdateDevisStatus = async (id: string, status: string) => {
-    await fetch(`/api/devis/${id}/status`, {
-      method: 'PUT',
-      headers: fetchHeaders,
-      body: JSON.stringify({ status })
-    });
+  const handleUpdateDevisStatus = async (id: string, status: 'nouvelle' | 'en_traitement' | 'traitee' | 'archivee') => {
+    try {
+      const res = await fetch(`/api/devis/${id}/status`, {
+        method: 'PUT',
+        headers: fetchHeaders,
+        body: JSON.stringify({ status })
+      });
+      if (!res.ok) await updateDevisStatus(id, status);
+    } catch (e) {
+      await updateDevisStatus(id, status);
+    }
     loadAllData();
   };
 
-  const handleUpdateReservationStatus = async (id: string, status: string) => {
-    await fetch(`/api/prereservations/${id}/status`, {
-      method: 'PUT',
-      headers: fetchHeaders,
-      body: JSON.stringify({ status })
-    });
+  const handleUpdateReservationStatus = async (id: string, status: 'en_attente' | 'confirmee' | 'refusee') => {
+    try {
+      const res = await fetch(`/api/prereservations/${id}/status`, {
+        method: 'PUT',
+        headers: fetchHeaders,
+        body: JSON.stringify({ status })
+      });
+      if (!res.ok) await updatePreReservationStatus(id, status);
+    } catch (e) {
+      await updatePreReservationStatus(id, status);
+    }
     loadAllData();
   };
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { KeyRound, ShieldCheck, Lock, Unlock, AlertTriangle, CheckCircle, Trash2 } from 'lucide-react';
+import { getAdminPassword, updateAdminPassword, removeAdminPassword } from '../../lib/firebaseStore';
 
 interface AdminPasswordFormProps {
   adminToken: string;
@@ -15,13 +16,16 @@ export const AdminPasswordForm: React.FC<AdminPasswordFormProps> = ({ adminToken
   const fetchStatus = async () => {
     try {
       const res = await fetch('/api/admin/status');
-      if (res.ok) {
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
         const data = await res.json();
         setIsLocked(data.isLocked);
+        return;
       }
     } catch (e) {
-      console.error('Failed to fetch admin status:', e);
+      console.error('Failed to fetch admin status from API, trying Firestore:', e);
     }
+    const pass = await getAdminPassword();
+    setIsLocked(!!pass);
   };
 
   useEffect(() => {
@@ -44,29 +48,34 @@ export const AdminPasswordForm: React.FC<AdminPasswordFormProps> = ({ adminToken
 
     setIsLoading(true);
     try {
-      const res = await fetch('/api/admin/password', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ newPassword })
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setMessage({
-          type: 'success',
-          text: data.message || 'Mot de passe mis à jour avec succès. Le Back-Office est désormais verrouillé.'
+      let saved = false;
+      try {
+        const res = await fetch('/api/admin/password', {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ newPassword })
         });
-        setNewPassword('');
-        setConfirmPassword('');
-        setIsLocked(true);
-      } else {
-        setMessage({ type: 'error', text: data.error || 'Erreur lors de la mise à jour.' });
+        if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+          saved = true;
+        }
+      } catch (e) {}
+
+      if (!saved) {
+        await updateAdminPassword(newPassword);
       }
+
+      setMessage({
+        type: 'success',
+        text: 'Mot de passe mis à jour avec succès. Le Back-Office est désormais verrouillé.'
+      });
+      setNewPassword('');
+      setConfirmPassword('');
+      setIsLocked(true);
     } catch (e) {
-      setMessage({ type: 'error', text: 'Erreur de connexion au serveur.' });
+      setMessage({ type: 'error', text: 'Erreur lors de la mise à jour du mot de passe.' });
     } finally {
       setIsLoading(false);
     }
@@ -81,27 +90,32 @@ export const AdminPasswordForm: React.FC<AdminPasswordFormProps> = ({ adminToken
     setMessage(null);
 
     try {
-      const res = await fetch('/api/admin/password', {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${adminToken}`
-        }
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setMessage({
-          type: 'success',
-          text: 'Le mot de passe a été supprimé. L\'accès au Back-Office est désormais libre.'
+      let removed = false;
+      try {
+        const res = await fetch('/api/admin/password', {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${adminToken}`
+          }
         });
-        setIsLocked(false);
-        setNewPassword('');
-        setConfirmPassword('');
-      } else {
-        setMessage({ type: 'error', text: data.error || 'Erreur lors de la suppression.' });
+        if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+          removed = true;
+        }
+      } catch (e) {}
+
+      if (!removed) {
+        await removeAdminPassword();
       }
+
+      setMessage({
+        type: 'success',
+        text: 'Le mot de passe a été supprimé. L\'accès au Back-Office est désormais libre.'
+      });
+      setIsLocked(false);
+      setNewPassword('');
+      setConfirmPassword('');
     } catch (e) {
-      setMessage({ type: 'error', text: 'Erreur serveur lors de la suppression.' });
+      setMessage({ type: 'error', text: 'Erreur lors de la suppression du mot de passe.' });
     } finally {
       setIsLoading(false);
     }

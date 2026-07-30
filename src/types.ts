@@ -105,7 +105,7 @@ export interface PreReservationItem {
   notes: string;
   status: 'en_attente' | 'confirmee' | 'refusee';
   createdAt: string;
-  emailNotificationSent: {
+  emailNotificationSent?: {
     clientEmailContent: string;
     adminEmailContent: string;
     sentAt: string;

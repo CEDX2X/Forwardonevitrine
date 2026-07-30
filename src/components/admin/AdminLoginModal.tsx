@@ -30,20 +30,18 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     const checkStatus = async () => {
       try {
         const res = await fetch('/api/admin/status');
-        if (res.ok) {
+        if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
           const data = await res.json();
           if (isMounted) setIsLocked(data.isLocked);
-        } else {
-          const pass = await getAdminPassword();
-          if (isMounted) setIsLocked(!!pass);
+          return;
         }
-      } catch (e) {
-        try {
-          const pass = await getAdminPassword();
-          if (isMounted) setIsLocked(!!pass);
-        } catch (err) {
-          if (isMounted) setIsLocked(false);
-        }
+      } catch (e) {}
+
+      try {
+        const pass = await getAdminPassword();
+        if (isMounted) setIsLocked(!!pass);
+      } catch (err) {
+        if (isMounted) setIsLocked(false);
       } finally {
         if (isMounted) setIsCheckingStatus(false);
       }
@@ -64,33 +62,38 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password })
-      });
-
-      const data = await res.json();
-      if (res.ok && data.token) {
-        onLoginSuccess(data.token);
-        setPassword('');
-      } else {
-        setErrorMsg(data.error || 'Mot de passe administrateur incorrect.');
-      }
-    } catch (e) {
+      let loginSuccess = false;
       try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+
+        if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+          const data = await res.json();
+          if (data.token) {
+            onLoginSuccess(data.token);
+            setPassword('');
+            loginSuccess = true;
+          }
+        }
+      } catch (e) {}
+
+      if (!loginSuccess) {
         const dbPass = await getAdminPassword();
         if (dbPass && password === dbPass) {
           onLoginSuccess(dbPass);
           setPassword('');
         } else if (!dbPass) {
           onLoginSuccess('OPEN');
+          setPassword('');
         } else {
           setErrorMsg('Mot de passe administrateur incorrect.');
         }
-      } catch (dbErr) {
-        setErrorMsg('Impossible de vérifier l\'authentification.');
       }
+    } catch (e) {
+      setErrorMsg('Impossible de vérifier l\'authentification.');
     } finally {
       setIsLoading(false);
     }

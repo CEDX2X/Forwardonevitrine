@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ProductItem, PreReservationEquipment } from '../types';
+import { ProductItem, PreReservationEquipment, PreReservationItem } from '../types';
 import { X, Calendar, ShoppingBag, Plus, Minus, Trash2, Send, CheckCircle2, Mail, ShieldAlert } from 'lucide-react';
+import { createPreReservation } from '../lib/firebaseStore';
 
 interface PreReservationModalProps {
   isOpen: boolean;
@@ -123,31 +124,47 @@ export const PreReservationModal: React.FC<PreReservationModalProps> = ({
 
     setIsSubmitting(true);
 
-    try {
-      const res = await fetch('/api/prereservations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clientName,
-          company,
-          email,
-          phone,
-          equipmentDetails: selectedItems,
-          startDate,
-          endDate,
-          location,
-          notes
-        })
-      });
+    const resObj: PreReservationItem = {
+      id: 'res_' + Date.now(),
+      clientName,
+      company,
+      email,
+      phone,
+      equipmentDetails: selectedItems,
+      startDate,
+      endDate,
+      durationDays,
+      totalEstimate: grandTotal,
+      location,
+      notes,
+      status: 'en_attente',
+      createdAt: new Date().toISOString()
+    };
 
-      const data = await res.json();
-      if (res.ok) {
-        setCompletedData(data.reservation);
-      } else {
-        alert(data.error || 'Erreur lors de la pré-réservation.');
+    try {
+      let submitted = false;
+      try {
+        const res = await fetch('/api/prereservations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(resObj)
+        });
+
+        if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+          const data = await res.json();
+          if (data.reservation) {
+            setCompletedData(data.reservation);
+            submitted = true;
+          }
+        }
+      } catch (err) {}
+
+      if (!submitted) {
+        await createPreReservation(resObj);
+        setCompletedData(resObj);
       }
     } catch (err) {
-      alert('Erreur réseau lors de la soumission.');
+      alert('Erreur lors de la pré-réservation.');
     } finally {
       setIsSubmitting(false);
     }

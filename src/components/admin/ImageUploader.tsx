@@ -118,20 +118,27 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       const compressedDataUrl = await compressImageToDataUrl(file);
 
       // 2. Also notify backend endpoint (for logging / authorization check)
-      const res = await fetch('/api/admin/upload', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${adminToken}`
-        },
-        body: JSON.stringify({
-          fileData: compressedDataUrl,
-          fileName: file.name
-        })
-      });
+      let finalUrl = compressedDataUrl;
+      try {
+        const res = await fetch('/api/admin/upload', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminToken}`
+          },
+          body: JSON.stringify({
+            fileData: compressedDataUrl,
+            fileName: file.name
+          })
+        });
 
-      const data = await res.json();
-      const finalUrl = (res.ok && data.url) ? data.url : compressedDataUrl;
+        if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+          const data = await res.json();
+          if (data.url) finalUrl = data.url;
+        }
+      } catch (uploadErr) {
+        // Safe fallback to client compressed image
+      }
 
       // 3. Save persistent base64 Data URL to state (will be saved in Firestore permanently)
       onChange(finalUrl);

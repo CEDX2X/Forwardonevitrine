@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { CategoryType } from '../types';
+import { CategoryType, QuoteRequestItem } from '../types';
 import { X, Send, CheckCircle2, FileText } from 'lucide-react';
+import { createDevis } from '../lib/firebaseStore';
 
 interface DevisModalProps {
   isOpen: boolean;
@@ -35,32 +36,43 @@ export const DevisModal: React.FC<DevisModalProps> = ({
     e.preventDefault();
     setIsSubmitting(true);
 
-    try {
-      const res = await fetch('/api/devis', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clientName,
-          company,
-          email,
-          phone,
-          moduleType,
-          budgetRange,
-          targetDate,
-          eventLocation,
-          description,
-          selectedItems: preselectedItem ? [preselectedItem] : []
-        })
-      });
+    const payload: QuoteRequestItem = {
+      id: 'devis_' + Date.now(),
+      clientName,
+      company,
+      email,
+      phone,
+      moduleType,
+      budgetRange,
+      targetDate,
+      eventLocation,
+      description,
+      selectedItems: preselectedItem ? [preselectedItem] : [],
+      status: 'nouvelle',
+      createdAt: new Date().toISOString()
+    };
 
-      if (res.ok) {
-        setSubmittedSuccess(true);
-      } else {
-        const err = await res.json();
-        alert(err.error || 'Erreur lors de la soumission de la demande.');
+    try {
+      let submitted = false;
+      try {
+        const res = await fetch('/api/devis', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+          submitted = true;
+        }
+      } catch (e) {}
+
+      if (!submitted) {
+        await createDevis(payload);
       }
+
+      setSubmittedSuccess(true);
     } catch (e) {
-      alert('Erreur de connexion au serveur.');
+      alert('Erreur lors de la soumission de la demande.');
     } finally {
       setIsSubmitting(false);
     }

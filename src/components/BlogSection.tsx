@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArticleItem, CommentItem } from '../types';
 import { Clock, Eye, Send, CheckCircle2, MessageSquare, ArrowLeft } from 'lucide-react';
 import { motion } from 'motion/react';
+import { getComments, createComment } from '../lib/firebaseStore';
 
 interface BlogSectionProps {
   articles: ArticleItem[];
@@ -21,12 +22,26 @@ export const BlogSection: React.FC<BlogSectionProps> = ({ articles, theme = 'lig
   // Fetch comments for selected article
   useEffect(() => {
     if (selectedArticle) {
-      fetch(`/api/comments?articleId=${selectedArticle.id}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (Array.isArray(data)) setComments(data);
-        })
-        .catch((err) => console.error('Failed to load comments:', err));
+      const loadComments = async () => {
+        try {
+          const res = await fetch(`/api/comments?articleId=${selectedArticle.id}`);
+          if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+            const data = await res.json();
+            if (Array.isArray(data)) {
+              setComments(data);
+              return;
+            }
+          }
+        } catch (err) {}
+        try {
+          const allComments = await getComments();
+          const filtered = allComments.filter(c => c.articleId === selectedArticle.id && c.status === 'approved');
+          setComments(filtered);
+        } catch (e) {
+          console.error('Failed to load comments from Firestore:', e);
+        }
+      };
+      loadComments();
     }
   }, [selectedArticle]);
 
@@ -38,27 +53,41 @@ export const BlogSection: React.FC<BlogSectionProps> = ({ articles, theme = 'lig
     setSubmitSuccessMsg('');
 
     try {
-      const res = await fetch('/api/comments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      let sent = false;
+      try {
+        const res = await fetch('/api/comments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            articleId: selectedArticle.id,
+            articleTitle: selectedArticle.title,
+            authorName: commentName,
+            content: commentText
+          })
+        });
+
+        if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+          sent = true;
+        }
+      } catch (e) {}
+
+      if (!sent) {
+        await createComment({
+          id: 'com_' + Date.now(),
           articleId: selectedArticle.id,
           articleTitle: selectedArticle.title,
           authorName: commentName,
-          content: commentText
-        })
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setSubmitSuccessMsg('Votre commentaire a été envoyé et est en attente de modération.');
-        setCommentName('');
-        setCommentText('');
-      } else {
-        alert(data.error || 'Erreur lors de l\'envoi du commentaire.');
+          content: commentText,
+          status: 'pending',
+          createdAt: new Date().toISOString()
+        });
       }
+
+      setSubmitSuccessMsg('Votre commentaire a été envoyé et est en attente de modération.');
+      setCommentName('');
+      setCommentText('');
     } catch (e) {
-      alert('Erreur réseau lors de la soumission.');
+      alert('Erreur lors de l\'envoi du commentaire.');
     } finally {
       setIsSubmitting(false);
     }

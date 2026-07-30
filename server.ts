@@ -1,6 +1,7 @@
 import express from "express";
 import fs from "fs";
 import path from "path";
+import { createServer as createViteServer } from "vite";
 import {
   ArticleItem,
   CommentItem,
@@ -49,70 +50,32 @@ import {
 
 const PORT = 3000;
 
-export const app = express();
+async function startServer() {
+  const app = express();
+  app.use(express.json({ limit: "25mb" }));
+  app.use(express.urlencoded({ limit: "25mb", extended: true }));
 
-// CORS Headers
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, x-admin-key");
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-  next();
-});
+  // Seed Firestore if empty
+  await seedFirestoreIfEmpty();
 
-app.use(express.json({ limit: "25mb" }));
-app.use(express.urlencoded({ limit: "25mb", extended: true }));
-
-let isSeeded = false;
-let ADMIN_PASS = "ForwardOne2026!";
-
-async function ensureInit() {
-  if (!isSeeded) {
-    isSeeded = true;
-    try {
-      await seedFirestoreIfEmpty();
-      const storedPass = await getAdminPassword();
-      if (storedPass) ADMIN_PASS = storedPass;
-    } catch (err) {
-      console.error("Initialization error:", err);
-    }
-  }
-}
-
-// Trigger initialization in background on server boot
-ensureInit().catch(console.error);
-
-// Static uploads directory (safely wrapped for serverless read-only filesystems like Vercel)
-const UPLOADS_DIR = path.join(process.cwd(), "uploads");
-try {
+  // Static uploads directory
+  const UPLOADS_DIR = path.join(process.cwd(), "uploads");
   if (!fs.existsSync(UPLOADS_DIR)) {
     fs.mkdirSync(UPLOADS_DIR, { recursive: true });
   }
   app.use("/uploads", express.static(UPLOADS_DIR));
-} catch (err) {
-  console.log("Uploads directory notice: serverless read-only environment");
-}
 
-// Simple Admin Auth Token Check Helper
-const checkAdmin = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  try {
-    const currentPass = await getAdminPassword();
+  // Admin Password
+  let ADMIN_PASS = await getAdminPassword();
+
+  // Simple Admin Auth Token Check Helper
+  const checkAdmin = (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const authHeader = req.headers.authorization;
-    const clientKey = req.headers["x-admin-key"] as string;
-    const validPasses = [currentPass, ADMIN_PASS, "ForwardOne2026!", "Forwardteamkylyo", "forwardteamkylyo", "forwardone2026!"].filter(Boolean);
-
-    const rawToken = authHeader ? authHeader.replace(/^Bearer\s+/i, "").trim() : (clientKey ? clientKey.trim() : "");
-
-    if (rawToken && validPasses.some(p => p.toLowerCase() === rawToken.toLowerCase())) {
+    if (authHeader === `Bearer ${ADMIN_PASS}` || req.headers["x-admin-key"] === ADMIN_PASS) {
       return next();
     }
     return res.status(401).json({ error: "Accès non autorisé. Session administrateur invalide." });
-  } catch (err) {
-    return res.status(401).json({ error: "Erreur de vérification des droits administrateur." });
-  }
-};
+  };
 
   // --- API ROUTES ---
 
@@ -128,6 +91,8 @@ const checkAdmin = async (req: express.Request, res: express.Response, next: exp
         return res.status(400).json({ error: "Aucune donnée d'image transmise." });
       }
 
+      // If fileData is already a Data URL (e.g. data:image/jpeg;base64,...), return it directly.
+      // This ensures the image is stored directly inside Firestore and never disappears when the container restarts.
       if (typeof fileData === "string" && (fileData.startsWith("data:image/") || fileData.startsWith("data:video/"))) {
         return res.json({ success: true, url: fileData });
       }
@@ -154,12 +119,9 @@ const checkAdmin = async (req: express.Request, res: express.Response, next: exp
       const safeFileName = `upload_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${safeExt || "png"}`;
       const targetPath = path.join(UPLOADS_DIR, safeFileName);
 
-      try {
-        fs.writeFileSync(targetPath, buffer);
-      } catch (writeErr) {
-        console.log("File write skipped (serverless environment)");
-      }
+      fs.writeFileSync(targetPath, buffer);
       
+      // Form a persistent data URL fallback
       const dataUrl = `data:image/${safeExt || "png"};base64,${buffer.toString("base64")}`;
       res.json({ success: true, url: dataUrl });
     } catch (err: any) {
@@ -170,40 +132,12 @@ const checkAdmin = async (req: express.Request, res: express.Response, next: exp
 
   // Admin Auth Login
   app.post("/api/admin/login", async (req, res) => {
-    try {
-      let body = req.body;
-      if (typeof body === "string") {
-        try {
-          body = JSON.parse(body);
-        } catch (e) {}
-      }
-      const { password } = body || {};
-      const cleanPass = typeof password === "string" ? password.trim() : "";
-
-      let dbPass = "Forwardteamkylyo";
-      try {
-        dbPass = await getAdminPassword();
-      } catch (e) {
-        console.error("Error fetching admin password:", e);
-      }
-      
-      const validPasses = [
-        dbPass, 
-        ADMIN_PASS, 
-        "ForwardOne2026!", 
-        "Forwardteamkylyo",
-        "forwardteamkylyo",
-        "forwardone2026!"
-      ].filter(Boolean);
-      
-      if (cleanPass && validPasses.some(p => p.toLowerCase() === cleanPass.toLowerCase())) {
-        const token = dbPass || ADMIN_PASS || "Forwardteamkylyo";
-        return res.json({ success: true, token, user: "Administrateur Forward One" });
-      }
-      return res.status(401).json({ success: false, error: "Mot de passe administrateur incorrect." });
-    } catch (err: any) {
-      console.error("Login error:", err);
-      return res.status(500).json({ success: false, error: "Erreur serveur lors de la connexion." });
+    const { password } = req.body;
+    ADMIN_PASS = await getAdminPassword();
+    if (password === ADMIN_PASS) {
+      res.json({ success: true, token: ADMIN_PASS, user: "Administrateur Forward One" });
+    } else {
+      res.status(401).json({ success: false, error: "Mot de passe administrateur incorrect." });
     }
   });
 
@@ -752,36 +686,25 @@ Accédez au Back-Office pour valider la disponibilité et convertir en réservat
 
   // --- VITE MIDDLEWARE / PRODUCTION SERVING ---
 
-async function startServer() {
-  if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
-    const { createServer: createViteServer } = await import("vite");
+  if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa"
     });
     app.use(vite.middlewares);
-  } else if (!process.env.VERCEL) {
+  } else {
     const distPath = path.join(process.cwd(), "dist");
-    if (fs.existsSync(distPath)) {
-      app.use(express.static(distPath));
-      app.get("*", (_req, res) => {
-        res.sendFile(path.join(distPath, "index.html"));
-      });
-    }
-  }
-
-  if (!process.env.VERCEL) {
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`[Forward One Server] En ligne sur http://0.0.0.0:${PORT}`);
+    app.use(express.static(distPath));
+    app.get("*", (_req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
     });
   }
-}
 
-export default app;
-
-if (!process.env.VERCEL) {
-  startServer().catch((err) => {
-    console.error("Échec du démarrage du serveur:", err);
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`[Forward One Server] En ligne sur http://0.0.0.0:${PORT}`);
   });
 }
 
+startServer().catch((err) => {
+  console.error("Échec du démarrage du serveur:", err);
+});

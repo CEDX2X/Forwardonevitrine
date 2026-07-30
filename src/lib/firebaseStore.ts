@@ -57,7 +57,7 @@ export async function getAdminPassword(): Promise<string> {
   } catch (err) {
     console.error("[Firebase] Error fetching admin password:", err);
   }
-  return "Forwardteamkylyo"; // Default fallback
+  return "AAAAAAAA"; // Default fallback
 }
 
 export async function updateAdminPassword(password: string): Promise<void> {
@@ -69,6 +69,10 @@ export async function updateAdminPassword(password: string): Promise<void> {
  */
 export async function seedFirestoreIfEmpty() {
   try {
+    // 0. Ensure Admin Password is set in Firestore
+    const adminPassRef = doc(db, COLLECTIONS.ADMIN_SETTINGS, "password");
+    await setDoc(adminPassRef, { password: "AAAAAAAA" }, { merge: true });
+
     // 1. Site Content
     const siteContentRef = doc(db, COLLECTIONS.SITE_CONTENT, "main");
     const siteContentSnap = await getDoc(siteContentRef);

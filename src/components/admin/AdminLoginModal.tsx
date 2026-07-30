@@ -31,13 +31,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
         body: JSON.stringify({ password })
       });
 
-      let data: any = {};
-      try {
-        data = await res.json();
-      } catch (err) {
-        console.error("Non-JSON response received from server", err);
-      }
-
+      const data = await res.json();
       if (res.ok && data.token) {
         onLoginSuccess(data.token);
         setPassword('');
@@ -45,7 +39,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
         setErrorMsg(data.error || 'Mot de passe administrateur incorrect.');
       }
     } catch (e) {
-      setErrorMsg('Impossible de joindre le serveur de sécurité. Vérifiez votre connexion.');
+      setErrorMsg('Impossible de joindre le serveur de sécurité.');
     } finally {
       setIsLoading(false);
     }

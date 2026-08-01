@@ -5,7 +5,7 @@ export const initialHeroSlides: CarouselSlideItem[] = [
     id: 'slide-1',
     title: 'Services & Expertise 360°',
     subtitle: 'Stratégie digitale, web development, régie technique et accompagnement sur-mesure pour tous vos projets.',
-    image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1800&q=85',
+    image: '',
     buttonText: 'Découvrir nos services',
     tab: 'services'
   },
@@ -13,7 +13,7 @@ export const initialHeroSlides: CarouselSlideItem[] = [
     id: 'slide-2',
     title: 'Catalogue Matériel Professionnel',
     subtitle: 'Sonorisation concert, éclairage scénique, écrans LED et backline disponibles à la location immédiate.',
-    image: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=1800&q=85',
+    image: '',
     buttonText: 'Explorer le catalogue',
     tab: 'catalog'
   },
@@ -21,7 +21,7 @@ export const initialHeroSlides: CarouselSlideItem[] = [
     id: 'slide-3',
     title: 'Packs Événementiels Clés en Main',
     subtitle: 'Solutions prêtes à l’emploi pour mariages, séminaires, concerts et soirées d’entreprise.',
-    image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1800&q=85',
+    image: '',
     buttonText: 'Voir les packs',
     tab: 'packs'
   },
@@ -29,7 +29,7 @@ export const initialHeroSlides: CarouselSlideItem[] = [
     id: 'slide-4',
     title: 'Actualités & Conseils d’Experts',
     subtitle: 'Guides techniques, tendances de l’innovation digitale et retours d’expérience de nos équipes.',
-    image: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1800&q=85',
+    image: '',
     buttonText: 'Lire les articles',
     tab: 'blog'
   },
@@ -37,7 +37,7 @@ export const initialHeroSlides: CarouselSlideItem[] = [
     id: 'slide-5',
     title: 'À Propos de Forward One',
     subtitle: 'Notre philosophie, notre engagement pour l’excellence opérationnelle et notre équipe de passionnés.',
-    image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1800&q=85',
+    image: '',
     buttonText: 'En savoir plus',
     tab: 'about'
   }
@@ -47,7 +47,7 @@ export const initialServiceCategories = [
   {
     id: 'cat-1',
     title: 'Marketing Digital',
-    image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80',
+    image: '',
     description: 'Stratégies d’avant-garde, branding, développement web et acquisition ciblée.',
     type: 'marketing' as const,
     available: true
@@ -55,7 +55,7 @@ export const initialServiceCategories = [
   {
     id: 'cat-2',
     title: 'Logistique Événementielle',
-    image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=800&q=80',
+    image: '',
     description: 'Catalogue matériel 4K, éclairage asservi, scènes modulaires et packs clés en main.',
     type: 'logistique' as const,
     available: true
@@ -63,7 +63,7 @@ export const initialServiceCategories = [
   {
     id: 'cat-3',
     title: 'Billetterie',
-    image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
+    image: '',
     description: 'Plateforme de billetterie intelligente pour vos grands événements (Prochainement).',
     type: 'billetterie' as const,
     available: false
@@ -74,7 +74,7 @@ export const initialPartners: PartnerItem[] = [
   {
     id: 'partner-1',
     name: 'L-Acoustics',
-    logo: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80',
+    logo: '',
     category: 'Sonorisation Pro',
     website: 'https://www.l-acoustics.com',
     visible: true
@@ -82,7 +82,7 @@ export const initialPartners: PartnerItem[] = [
   {
     id: 'partner-2',
     name: 'Shure Audio',
-    logo: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?auto=format&fit=crop&w=400&q=80',
+    logo: '',
     category: 'Microphonie HF',
     website: 'https://www.shure.com',
     visible: true
@@ -90,7 +90,7 @@ export const initialPartners: PartnerItem[] = [
   {
     id: 'partner-3',
     name: 'Blackmagic Design',
-    logo: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?auto=format&fit=crop&w=400&q=80',
+    logo: '',
     category: 'Régie Vidéo & 4K',
     website: 'https://www.blackmagicdesign.com',
     visible: true
@@ -98,7 +98,7 @@ export const initialPartners: PartnerItem[] = [
   {
     id: 'partner-4',
     name: 'MA Lighting',
-    logo: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=400&q=80',
+    logo: '',
     category: 'Éclairage Scénique',
     website: 'https://www.malighting.com',
     visible: true
@@ -106,7 +106,7 @@ export const initialPartners: PartnerItem[] = [
   {
     id: 'partner-5',
     name: 'Orange Cameroun',
-    logo: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80',
+    logo: '',
     category: 'Partenaire Télécom',
     website: 'https://www.orange.cm',
     visible: true
@@ -114,7 +114,7 @@ export const initialPartners: PartnerItem[] = [
   {
     id: 'partner-6',
     name: 'Canal+ Events',
-    logo: 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=400&q=80',
+    logo: '',
     category: 'Sponsor Média',
     website: 'https://www.canalplus.com',
     visible: true
@@ -122,7 +122,7 @@ export const initialPartners: PartnerItem[] = [
   {
     id: 'partner-7',
     name: 'Meta Business Partner',
-    logo: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=400&q=80',
+    logo: '',
     category: 'Social Media Ads',
     website: 'https://www.facebook.com/business',
     visible: true
@@ -130,7 +130,7 @@ export const initialPartners: PartnerItem[] = [
   {
     id: 'partner-8',
     name: 'Google Marketing Platform',
-    logo: 'https://images.unsplash.com/photo-1573804633927-bfcbcd909acd?auto=format&fit=crop&w=400&q=80',
+    logo: '',
     category: 'SEO & Digital',
     website: 'https://marketingplatform.google.com',
     visible: true
@@ -145,7 +145,7 @@ export const initialTestimonials: TestimonialItem[] = [
     company: 'Orange Cameroun',
     comment: 'La régie technique vidéo et son de Forward One a totalement métamorphosé notre convention annuelle. Une sonorisation cristalline et une réactivité exemplaire.',
     rating: 5,
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+    avatar: '',
     date: '15 Juillet 2026'
   },
   {
@@ -155,7 +155,7 @@ export const initialTestimonials: TestimonialItem[] = [
     company: 'Event Prestige Yaoundé',
     comment: 'Le matériel son, lumière et scène loué chez Forward One est d’une propreté et d’une performance irréprochables. Nos soirées d’entreprise VIP sont toujours un franc succès !',
     rating: 5,
-    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80',
+    avatar: '',
     date: '02 Juillet 2026'
   },
   {
@@ -165,7 +165,7 @@ export const initialTestimonials: TestimonialItem[] = [
     company: 'Pulse Media Group',
     comment: 'Forward One a conçu notre plateforme e-commerce et gère nos campagnes d’acquisition digitale. Taux de conversion et visibilité de marque multipliés par 3 en 90 jours.',
     rating: 5,
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+    avatar: '',
     date: '28 Juin 2026'
   }
 ];
@@ -176,7 +176,7 @@ export const initialVideoCards: VideoCardItem[] = [
     title: 'Régie Vidéo 4K & Sonorisation Concert Live',
     subtitle: 'Captation multi-caméras et sonorisation L-Acoustics en direct du grand festival Akwa Live.',
     videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    thumbnailImage: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=1200&q=80',
+    thumbnailImage: '',
     badge: 'LOGISTIQUE ÉVÉNEMENTIELLE'
   },
   {
@@ -184,7 +184,7 @@ export const initialVideoCards: VideoCardItem[] = [
     title: 'Showroom Lumière & Scénographie Scénique',
     subtitle: 'Démonstration de nos lyres asservies Robe BMFL et ponts aluminium certifiés SOCOTEC.',
     videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    thumbnailImage: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80',
+    thumbnailImage: '',
     badge: 'ÉCLAIRAGE & SCÈNE'
   },
   {
@@ -192,7 +192,7 @@ export const initialVideoCards: VideoCardItem[] = [
     title: 'Stratégie Branding & Web Performance 360°',
     subtitle: 'Comment nous propulsons les marques leaders au Cameroun avec Next.js et du design d’avant-garde.',
     videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    thumbnailImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80',
+    thumbnailImage: '',
     badge: 'MARKETING DIGITAL'
   }
 ];
@@ -234,7 +234,7 @@ export const initialServices: ServiceItem[] = [
     fullDescription: "Nous définissons une identité de marque puissante et mémorable qui capte l'attention et affirme votre leadership. De la création du logo à la rédaction de votre charte éditoriale, nous construisons un univers de marque sans limites.",
     iconName: "Compass",
     features: ["Audit de marque & positionnement", "Identité visuelle & système graphique", "Charte éditoriale & Tone of Voice", "Guidelines multi-supports"],
-    image: "https://images.unsplash.com/photo-1542744094-3a3121699f84?auto=format&fit=crop&w=800&q=80"
+    image: ""
   },
   {
     id: "serv-mkt-2",
@@ -248,7 +248,7 @@ export const initialServices: ServiceItem[] = [
     fullDescription: "Conception de sites vitrines d'exception, plateformes web sur-mesure et applications mobiles ultra-fluides. Nous combinons esthétique raffinée, temps de chargement ultra-rapides et taux de conversion optimisés.",
     iconName: "Code2",
     features: ["Design UX/UI sur-mesure", "Développement Next.js / React réactif", "Optimisation Core Web Vitals", "Architecture sécurisée & Scalable"],
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80"
+    image: ""
   },
   {
     id: "serv-mkt-3",
@@ -262,7 +262,7 @@ export const initialServices: ServiceItem[] = [
     fullDescription: "Propulsez votre visibilité organique grâce à un référencement technique rigoureux, une stratégie de contenu ciblée et une acquisition de liens d'autorité.",
     iconName: "TrendingUp",
     features: ["Audit SEO technique complet", "Recherche & ciblage de mots-clés", "Stratégie de netlinking haute autorité", "SEO Local & international"],
-    image: "https://images.unsplash.com/photo-1562577309-4932fdd64cd1?auto=format&fit=crop&w=800&q=80"
+    image: ""
   },
   {
     id: "serv-mkt-4",
@@ -276,7 +276,7 @@ export const initialServices: ServiceItem[] = [
     fullDescription: "Engagez vos audiences sur LinkedIn, Instagram, TikTok et YouTube avec des contenus créatifs à forte valeur ajoutée et des campagnes publicitaires rentables.",
     iconName: "Share2",
     features: ["Community Management engageant", "Campagnes Meta & LinkedIn Ads", "Création de contenus vidéo Shorts/Reels", "A/B Testing & Reporting analytique"],
-    image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=800&q=80"
+    image: ""
   },
 
   // Logistique Événementielle
@@ -288,7 +288,7 @@ export const initialServices: ServiceItem[] = [
     fullDescription: "Distribution sonore homogène et cristalline grâce à du matériel de sonorisation de classe internationale. Nos ingénieurs du son assurent une couverture parfaite adaptée à la géométrie de vos espaces.",
     iconName: "Volume2",
     features: ["Systèmes Line Array L-Acoustics & d&b", "Micros HF sans fil professionnels", "Consoles numériques pré-configurées", "Gestion de la régie son en direct"],
-    image: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=800&q=80"
+    image: ""
   },
   {
     id: "serv-log-2",
@@ -298,7 +298,7 @@ export const initialServices: ServiceItem[] = [
     fullDescription: "Transformez vos lieux de réception avec une architecture lumineuse immersive et des effets scéniques captivants qui subliment vos temps forts et vos intervenants.",
     iconName: "Zap",
     features: ["Projecteurs asservis & Lyres de découpe", "Mise en lumière architecturale LED", "Consoles GrandMA2/GrandMA3", "Programmation de shows synchronisés"],
-    image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&q=80"
+    image: ""
   },
   {
     id: "serv-log-3",
@@ -308,7 +308,7 @@ export const initialServices: ServiceItem[] = [
     fullDescription: "Montage et assemblage sécurisé de scènes, podiums, totems d'exposition et structures métalliques certifiées SOCOTEC. Design scénographique sur-mesure.",
     iconName: "Box",
     features: ["Podiums & scènes modulaires Prolyte", "Ponts de structure aluminium noir/argent", "Habillage tissu éco-responsable", "Certification de sécurité & notes de calcul"],
-    image: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=800&q=80"
+    image: ""
   },
   {
     id: "serv-log-4",
@@ -318,7 +318,7 @@ export const initialServices: ServiceItem[] = [
     fullDescription: "Diffusion vidéo haute définition en intérieur comme en extérieur. Captation multi-caméras 4K et retransmission live streaming sur vos canaux digitaux.",
     iconName: "Tv",
     features: ["Murs LED Pitch 2.6mm & 3.9mm", "Régie vidéo HD Blackmagic Design", "Captation 4K multi-caméras", "Streaming live sécurisé & interactif"],
-    image: "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?auto=format&fit=crop&w=800&q=80"
+    image: ""
   }
 ];
 
@@ -337,7 +337,7 @@ export const initialProducts: ProductItem[] = [
       "Poids": "26 kg per enclosure",
       "Connecteurs": "Speakon NL4"
     },
-    image: "https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=800&q=80",
+    image: "",
     isFeatured: true
   },
   {
@@ -354,7 +354,7 @@ export const initialProducts: ProductItem[] = [
       "Sorties DMX": "6 x XLR 5-pin",
       "Protocoles": "MA-Net3, sACN, Art-Net"
     },
-    image: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=800&q=80",
+    image: "",
     isFeatured: true
   },
   {
@@ -371,7 +371,7 @@ export const initialProducts: ProductItem[] = [
       "Fréquence de rafraîchissement": "3 840 Hz",
       "Protection": "IP65 Waterproof"
     },
-    image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80",
+    image: "",
     isFeatured: true
   },
   {
@@ -387,7 +387,7 @@ export const initialProducts: ProductItem[] = [
       "Autonomie": "9 heures sur batterie rechargeable SB900B",
       "Sortie Audio": "Dante & XLR Analogique"
     },
-    image: "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?auto=format&fit=crop&w=800&q=80",
+    image: "",
     isFeatured: false
   },
   {
@@ -403,7 +403,7 @@ export const initialProducts: ProductItem[] = [
       "Zoom": "5° à 55°",
       "Couteaux": "4 couteaux orientables individuellement"
     },
-    image: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=800&q=80",
+    image: "",
     isFeatured: false
   },
   {
@@ -419,7 +419,7 @@ export const initialProducts: ProductItem[] = [
       "Matière": "Cuir de vêtement premium cognac",
       "Style": "Capitonné classique"
     },
-    image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80",
+    image: "",
     isFeatured: true
   },
   {
@@ -435,7 +435,7 @@ export const initialProducts: ProductItem[] = [
       "Hauteur pieds": "Variable 20 cm à 120 cm",
       "Finition": "Contreplaqué antidérapant étanche"
     },
-    image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80",
+    image: "",
     isFeatured: false
   },
   {
@@ -451,7 +451,7 @@ export const initialProducts: ProductItem[] = [
       "Résistance": "Polyéthylène résistant aux chocs IP65",
       "Contrôle": "DMX sans fil WDMX ou télécommande"
     },
-    image: "https://images.unsplash.com/photo-1574096079513-d8259312b785?auto=format&fit=crop&w=800&q=80",
+    image: "",
     isFeatured: false
   }
 ];
@@ -473,7 +473,7 @@ export const initialPacks: PackItem[] = [
       "Kit de modèles réseaux sociaux personnalisés"
     ],
     popular: true,
-    image: "https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80"
+    image: ""
   },
   {
     id: "pack-2",
@@ -491,7 +491,7 @@ export const initialPacks: PackItem[] = [
       "Livraison, montage et démonstration complète"
     ],
     popular: true,
-    image: "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=800&q=80"
+    image: ""
   },
   {
     id: "pack-3",
@@ -509,7 +509,7 @@ export const initialPacks: PackItem[] = [
       "Replay monté & contenus vidéo déclinés pour réseaux sociaux"
     ],
     popular: false,
-    image: "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=800&q=80"
+    image: ""
   }
 ];
 
@@ -539,7 +539,7 @@ Un symbole universel compris par tous dans toutes les cultures. La flèche est i
     authorRole: "Directeur de la Création & Stratégie",
     date: "2026-07-20",
     readTime: "4 min",
-    image: "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=800&q=80",
+    image: "",
     published: true,
     views: 342
   },
@@ -567,7 +567,7 @@ En événementiel, le risque zéro n'existe pas, mais la préparation limite les
     authorRole: "Responsable Régie & Logistique",
     date: "2026-07-15",
     readTime: "6 min",
-    image: "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=800&q=80",
+    image: "",
     published: true,
     views: 520
   },
@@ -592,7 +592,7 @@ Google privilégie les plateformes réactives à temps de chargement instantané
     authorRole: "Head of Digital Growth",
     date: "2026-07-10",
     readTime: "5 min",
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80",
+    image: "",
     published: true,
     views: 410
   }

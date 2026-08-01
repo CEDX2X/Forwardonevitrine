@@ -1,75 +1,51 @@
 import React, { useState, useEffect } from 'react';
-import { SiteContent, CarouselSlideItem } from '../types';
+import { SiteContent } from '../types';
 
 interface HeroProps {
   siteContent: SiteContent;
   theme?: 'light' | 'dark';
 }
 
-const defaultSlides: CarouselSlideItem[] = [
-  {
-    id: 'slide-1',
-    title: '',
-    subtitle: '',
-    image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1800&q=85',
-    buttonText: '',
-    tab: ''
-  },
-  {
-    id: 'slide-2',
-    title: '',
-    subtitle: '',
-    image: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=1800&q=85',
-    buttonText: '',
-    tab: ''
-  },
-  {
-    id: 'slide-3',
-    title: '',
-    subtitle: '',
-    image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1800&q=85',
-    buttonText: '',
-    tab: ''
-  },
-  {
-    id: 'slide-4',
-    title: '',
-    subtitle: '',
-    image: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1800&q=85',
-    buttonText: '',
-    tab: ''
-  },
-  {
-    id: 'slide-5',
-    title: '',
-    subtitle: '',
-    image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1800&q=85',
-    buttonText: '',
-    tab: ''
-  }
-];
-
 export const Hero: React.FC<HeroProps> = ({
   siteContent,
   theme = 'light'
 }) => {
-  const slides = siteContent?.heroSlides && siteContent.heroSlides.length > 0 ? siteContent.heroSlides : defaultSlides;
+  const allSlides = siteContent?.heroSlides || [];
+  const slides = allSlides.filter((s) => s.image && s.image.trim() !== '');
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
-    if (currentSlide >= slides.length) {
+    if (currentSlide >= slides.length && slides.length > 0) {
       setCurrentSlide(0);
     }
-  }, [slides.length]);
+  }, [slides.length, currentSlide]);
 
   useEffect(() => {
-    if (isPaused) return;
+    if (isPaused || slides.length <= 1) return;
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
     return () => clearInterval(interval);
   }, [isPaused, slides.length]);
+
+  if (slides.length === 0) {
+    return (
+      <section className="relative w-full overflow-hidden bg-gradient-to-br from-[#0a0a28] via-[#141446] to-[#0c0c28] text-white py-20 sm:py-28 select-none border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center space-y-6">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#00C2C2]/20 text-[#00C2C2] border border-[#00C2C2]/30">
+            <span>{siteContent?.heroSlogan || "Mouvement. Excellence. Leadership."}</span>
+          </div>
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white max-w-4xl mx-auto leading-tight">
+            {siteContent?.heroTitle || "Progress Without Limits."}
+          </h1>
+          <p className="text-base sm:text-xl text-slate-300 max-w-2xl mx-auto font-normal leading-relaxed">
+            {siteContent?.heroSubtitle || "Forward One propulse votre marque et façonne vos événements avec une maîtrise d'exception."}
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section 
@@ -91,7 +67,7 @@ export const Hero: React.FC<HeroProps> = ({
             {/* Background Image */}
             <img
               src={s.image}
-              alt="Slide"
+              alt={s.title || "Slide"}
               className="absolute inset-0 w-full h-full object-cover object-center"
               referrerPolicy="no-referrer"
             />
@@ -101,18 +77,20 @@ export const Hero: React.FC<HeroProps> = ({
         ))}
 
         {/* Minimalist dot indicators */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
-          {slides.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setCurrentSlide(idx)}
-              className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                idx === currentSlide ? 'w-8 bg-white' : 'w-2 bg-white/50 hover:bg-white/80'
-              }`}
-              aria-label={`Slide ${idx + 1}`}
-            />
-          ))}
-        </div>
+        {slides.length > 1 && (
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+            {slides.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentSlide(idx)}
+                className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                  idx === currentSlide ? 'w-8 bg-white' : 'w-2 bg-white/50 hover:bg-white/80'
+                }`}
+                aria-label={`Slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+        )}
 
       </div>
     </section>

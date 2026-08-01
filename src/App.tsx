@@ -33,14 +33,58 @@ import { PreReservationModal } from './components/PreReservationModal';
 import { AdminLoginModal } from './components/admin/AdminLoginModal';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 
+const CACHE_KEYS = {
+  SITE_CONTENT: 'forwardone_cache_siteContent',
+  SERVICES: 'forwardone_cache_services',
+  PRODUCTS: 'forwardone_cache_products',
+  PACKS: 'forwardone_cache_packs',
+  ARTICLES: 'forwardone_cache_articles',
+};
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('home');
   const [navHistory, setNavHistory] = useState<string[]>(['home']);
-  const [siteContent, setSiteContent] = useState<SiteContent>(initialSiteContent);
-  const [services, setServices] = useState<ServiceItem[]>([]);
-  const [products, setProducts] = useState<ProductItem[]>([]);
-  const [packs, setPacks] = useState<PackItem[]>([]);
-  const [articles, setArticles] = useState<ArticleItem[]>([]);
+
+  // Lazy state initializers from localStorage cache to prevent flash of initial default data
+  const [siteContent, setSiteContent] = useState<SiteContent>(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEYS.SITE_CONTENT);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return initialSiteContent;
+  });
+
+  const [services, setServices] = useState<ServiceItem[]>(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEYS.SERVICES);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return [];
+  });
+
+  const [products, setProducts] = useState<ProductItem[]>(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEYS.PRODUCTS);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return [];
+  });
+
+  const [packs, setPacks] = useState<PackItem[]>(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEYS.PACKS);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return [];
+  });
+
+  const [articles, setArticles] = useState<ArticleItem[]>(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEYS.ARTICLES);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return [];
+  });
 
   // Navigation handlers with history stack
   const navigateToTab = (newTab: string) => {
@@ -76,56 +120,53 @@ export default function App() {
     return localStorage.getItem('forwardone_admin_token') || null;
   });
 
-  // Fetch Public Site Data
+  // Fetch Public Site Data in Parallel with Fast Fallbacks
   const fetchPublicData = async () => {
     try {
-      let contentData, servicesData, productsData, packsData, articlesData;
-
-      try {
-        const resContent = await fetch('/api/site-content');
-        if (resContent.ok && resContent.headers.get('content-type')?.includes('application/json')) {
-          contentData = await resContent.json();
+      const fetchResource = async <T,>(apiPath: string, firestoreGetter: () => Promise<T>): Promise<T> => {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 600);
+          const res = await fetch(apiPath, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+            const data = await res.json();
+            if (data) return data as T;
+          }
+        } catch (e) {
+          // Ignore API timeout or missing backend, fall through to direct Firestore call
         }
-      } catch (e) {}
-      if (!contentData) contentData = await getSiteContent();
+        return await firestoreGetter();
+      };
 
-      try {
-        const resServices = await fetch('/api/services');
-        if (resServices.ok && resServices.headers.get('content-type')?.includes('application/json')) {
-          servicesData = await resServices.json();
-        }
-      } catch (e) {}
-      if (!servicesData) servicesData = await getServices();
+      const [contentData, servicesData, productsData, packsData, articlesData] = await Promise.all([
+        fetchResource('/api/site-content', getSiteContent),
+        fetchResource('/api/services', getServices),
+        fetchResource('/api/products', getProducts),
+        fetchResource('/api/packs', getPacks),
+        fetchResource('/api/articles', getArticles),
+      ]);
 
-      try {
-        const resProducts = await fetch('/api/products');
-        if (resProducts.ok && resProducts.headers.get('content-type')?.includes('application/json')) {
-          productsData = await resProducts.json();
-        }
-      } catch (e) {}
-      if (!productsData) productsData = await getProducts();
-
-      try {
-        const resPacks = await fetch('/api/packs');
-        if (resPacks.ok && resPacks.headers.get('content-type')?.includes('application/json')) {
-          packsData = await resPacks.json();
-        }
-      } catch (e) {}
-      if (!packsData) packsData = await getPacks();
-
-      try {
-        const resArticles = await fetch('/api/articles');
-        if (resArticles.ok && resArticles.headers.get('content-type')?.includes('application/json')) {
-          articlesData = await resArticles.json();
-        }
-      } catch (e) {}
-      if (!articlesData) articlesData = await getArticles();
-
-      setSiteContent(contentData);
-      setServices(servicesData);
-      setProducts(productsData);
-      setPacks(packsData);
-      setArticles(articlesData);
+      if (contentData) {
+        setSiteContent(contentData);
+        try { localStorage.setItem(CACHE_KEYS.SITE_CONTENT, JSON.stringify(contentData)); } catch (e) {}
+      }
+      if (servicesData) {
+        setServices(servicesData);
+        try { localStorage.setItem(CACHE_KEYS.SERVICES, JSON.stringify(servicesData)); } catch (e) {}
+      }
+      if (productsData) {
+        setProducts(productsData);
+        try { localStorage.setItem(CACHE_KEYS.PRODUCTS, JSON.stringify(productsData)); } catch (e) {}
+      }
+      if (packsData) {
+        setPacks(packsData);
+        try { localStorage.setItem(CACHE_KEYS.PACKS, JSON.stringify(packsData)); } catch (e) {}
+      }
+      if (articlesData) {
+        setArticles(articlesData);
+        try { localStorage.setItem(CACHE_KEYS.ARTICLES, JSON.stringify(articlesData)); } catch (e) {}
+      }
     } catch (e) {
       console.error('Failed to fetch public site data:', e);
     }

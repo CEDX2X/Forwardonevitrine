@@ -146,6 +146,15 @@ export async function seedFirestoreIfEmpty() {
 export async function resetAndReseedFirestore(): Promise<{ success: boolean; message: string }> {
   try {
     console.log("[Firebase] Starting database reset & re-seed...");
+    
+    // Clear local storage cache
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('forwardone_cache_siteContent');
+      localStorage.removeItem('forwardone_cache_services');
+      localStorage.removeItem('forwardone_cache_products');
+      localStorage.removeItem('forwardone_cache_packs');
+      localStorage.removeItem('forwardone_cache_articles');
+    }
 
     // 1. Reset Site Content
     await setDoc(doc(db, COLLECTIONS.SITE_CONTENT, "main"), initialSiteContent);
@@ -270,7 +279,6 @@ export async function updateSiteContent(data: Partial<SiteContent>): Promise<Sit
 // ================= SERVICES =================
 export async function getServices(): Promise<ServiceItem[]> {
   try {
-    await seedFirestoreIfEmpty();
     const snap = await getDocs(collection(db, COLLECTIONS.SERVICES));
     if (!snap.empty) {
       return snap.docs.map((doc) => doc.data() as ServiceItem);
@@ -300,7 +308,6 @@ export async function deleteService(id: string): Promise<void> {
 // ================= PRODUCTS =================
 export async function getProducts(): Promise<ProductItem[]> {
   try {
-    await seedFirestoreIfEmpty();
     const snap = await getDocs(collection(db, COLLECTIONS.PRODUCTS));
     if (!snap.empty) {
       return snap.docs.map((doc) => doc.data() as ProductItem);
@@ -330,7 +337,6 @@ export async function deleteProduct(id: string): Promise<void> {
 // ================= PACKS =================
 export async function getPacks(): Promise<PackItem[]> {
   try {
-    await seedFirestoreIfEmpty();
     const snap = await getDocs(collection(db, COLLECTIONS.PACKS));
     if (!snap.empty) {
       return snap.docs.map((doc) => doc.data() as PackItem);
@@ -360,7 +366,6 @@ export async function deletePack(id: string): Promise<void> {
 // ================= ARTICLES =================
 export async function getArticles(): Promise<ArticleItem[]> {
   try {
-    await seedFirestoreIfEmpty();
     const snap = await getDocs(collection(db, COLLECTIONS.ARTICLES));
     if (!snap.empty) {
       const list = snap.docs.map((doc) => doc.data() as ArticleItem);
@@ -391,7 +396,6 @@ export async function deleteArticle(id: string): Promise<void> {
 // ================= COMMENTS =================
 export async function getComments(): Promise<CommentItem[]> {
   try {
-    await seedFirestoreIfEmpty();
     const snap = await getDocs(collection(db, COLLECTIONS.COMMENTS));
     if (!snap.empty) {
       const list = snap.docs.map((doc) => doc.data() as CommentItem);
